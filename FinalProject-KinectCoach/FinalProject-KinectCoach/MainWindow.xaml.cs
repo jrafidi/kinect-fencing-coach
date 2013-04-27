@@ -154,8 +154,6 @@ namespace FinalProject_KinectCoach
 
             this.waveDisplay.Source = this.energyBitmap;
 
-            CompositionTarget.Rendering += UpdateEnergy;
-
             // Start streaming audio!
             this.audioStream = this.sensor.AudioSource.Start();
 
@@ -557,7 +555,7 @@ namespace FinalProject_KinectCoach
             drawingContext.DrawLine(drawPen, this.SkeletonPointToScreen(joint0.Position), this.SkeletonPointToScreen(joint1.Position));
         }
 
-        private string recordDirectory = "C:\\Users\\Joey Rafidi\\Documents\\visual studio 2012\\Projects\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
+        private string recordDirectory = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
         private string recordFileName;
         private bool recording = false;
 
