@@ -260,27 +260,45 @@ namespace FinalProject_KinectCoach
 
             if (e.Result.Confidence >= ConfidenceThreshold)
             {
-                switch (e.Result.Semantics.Value.ToString())
+                this.statusBarText.Text = "";
+                switch (e.Result.Semantics["type"].Value.ToString())
                 {
-                    case "RECORD":
-                        this.statusBarText.Text = "";
-                        startRecording();
+                    case "simple":
+                        switch (e.Result.Semantics["command"].Value.ToString())
+                        {
+                            case "recording":                              
+                                startRecording();
+                                break;
+                            case "stoprecording":
+                                stopRecording();
+                                break;
+                            case "show":
+                                drawComparisonPose = true;
+                                break;
+                            case "hide":
+                                drawComparisonPose = false;
+                                break;
+                            case "clear":
+                                clearPose();
+                                break;
+                        }
                         break;
-                    case "STOPREC":
-                        this.statusBarText.Text = "";
-                        stopRecording();
-                        break;
-                    case "ENGARDE":
-                        checkEngarde();
-                        break;
-                    case "SHOW":
-                        drawComparison = true;
-                        break;
-                    case "CLEAR":
-                        drawComparison = false;
-                        clearTrainingFrames();
+                    case "pose":
+                        switch (e.Result.Semantics["pose"].Value.ToString())
+                        {
+                            case "ready":
+                                checkEngarde();
+                                break;
+                            case "extension":
+                                checkExtension();
+                                break;
+                            case "lunge":
+                                checkLunge();
+                                break;
+                        }
                         break;
                 }
+                
             }
             else
             {
@@ -295,7 +313,7 @@ namespace FinalProject_KinectCoach
         /// <param name="e">event arguments.</param>
         private void SpeechRejected(object sender, SpeechRecognitionRejectedEventArgs e)
         {
-            this.statusBarText.Text = "Speech Not Recognized";
+            this.statusBarText.Text = "Speech Not Recognized (Rejected)";
         }
 
         ///////////////////
@@ -346,9 +364,6 @@ namespace FinalProject_KinectCoach
         /// Pen used for drawing bones that are currently tracked
         /// </summary>
         private Pen trackedBonePen = new Pen(Brushes.DarkBlue, 6);
-
-        private Pen correctBonePen = new Pen(Brushes.Green, 6);
-        private Pen incorrectBonePen = new Pen(Brushes.Red, 6);
 
         /// <summary>
         /// Pen used for drawing bones that are currently inferred
@@ -430,15 +445,12 @@ namespace FinalProject_KinectCoach
 
                 if (skeletons.Length != 0)
                 {
-                    if (drawComparison)
+                    if (drawComparisonPose)
                     {
-                        foreach (Skeleton sk in trainingFrames)
-                        {
-                            Pen oldPen = trackedBonePen;
-                            trackedBonePen = new Pen(Brushes.DarkGreen, 6);
-                            this.DrawBonesAndJoints(sk, dc);
-                            trackedBonePen = oldPen;
-                        }
+                        Pen oldPen = trackedBonePen;
+                        trackedBonePen = new Pen(Brushes.DarkGreen, 6);
+                        this.DrawBonesAndJoints(currentPose.frame, dc);
+                        trackedBonePen = oldPen;
                     }
 
                     foreach (Skeleton skel in skeletons)
@@ -447,9 +459,9 @@ namespace FinalProject_KinectCoach
 
                         if (skel.TrackingState == SkeletonTrackingState.Tracked)
                         {
-                            if (compareEngarde)
+                            if (comparePose)
                             {
-                                this.DrawBonesAndJointWithComparison(skel, trainingFrames.ElementAt(0), dc);
+                                this.DrawBonesAndJointWithComparison(skel, currentPose.frame, dc);
                             }
                             else
                             {
@@ -514,6 +526,9 @@ namespace FinalProject_KinectCoach
             this.DrawBone(skeleton, drawingContext, JointType.HipRight, JointType.KneeRight, trackedBonePen);
             this.DrawBone(skeleton, drawingContext, JointType.KneeRight, JointType.AnkleRight, trackedBonePen);
             this.DrawBone(skeleton, drawingContext, JointType.AnkleRight, JointType.FootRight, trackedBonePen);
+
+            // Sword (right handed)
+            this.DrawSword(skeleton, drawingContext);
 
             // Render Joints
             foreach (Joint joint in skeleton.Joints)
@@ -585,9 +600,39 @@ namespace FinalProject_KinectCoach
             drawingContext.DrawLine(drawPen, this.SkeletonPointToScreen(joint0.Position), this.SkeletonPointToScreen(joint1.Position));
         }
 
+        private void DrawSword(Skeleton skel, DrawingContext dc)
+        {
+            Joint rHand = skel.Joints[JointType.HandRight];
+            Joint rWrist = skel.Joints[JointType.WristRight];
 
-        private double errorThreshold = 0.1;
+            SkeletonPoint diff = new SkeletonPoint();
+            diff.X = 1.2f*rHand.Position.X - rWrist.Position.X;
+            diff.Y = 1.2f*rHand.Position.Y - rWrist.Position.Y;
+            diff.Z = 1.2f*rHand.Position.Z - rWrist.Position.Z;
+            
+            dc.DrawLine(new Pen(Brushes.DarkGray, 5), this.SkeletonPointToScreen(rHand.Position), this.SkeletonPointToScreen(diff));
+        }
 
+        ////////////////////
+        // COMPARISON DRAWING CODE
+        ////////////////////
+
+        /// <summary>
+        /// Pen for bones that are in the correct position
+        /// </summary>
+        private Pen correctBonePen = new Pen(Brushes.Green, 6);
+
+        /// <summary>
+        /// Pen for bones who have at least one joint in the incorrect position
+        /// </summary>
+        private Pen incorrectBonePen = new Pen(Brushes.Red, 6);
+
+        /// <summary>
+        /// Compare the passed skeleton "skeleton" with the skeleton "compare" to get an error map, then draw bones according to pose and error
+        /// </summary>
+        /// <param name="skeleton"></param>
+        /// <param name="compare"></param>
+        /// <param name="drawingContext"></param>
         private void DrawBonesAndJointWithComparison(Skeleton skeleton, Skeleton compare, DrawingContext drawingContext)
         {
             Dictionary<JointType, double> errorMap = new Dictionary<JointType, double>();
@@ -608,33 +653,33 @@ namespace FinalProject_KinectCoach
             }
 
             // Render Torso
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.Head, JointType.ShoulderCenter, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderLeft, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderRight, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.Spine, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.Spine, JointType.HipCenter, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipLeft, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipRight, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.Head, JointType.ShoulderCenter, errorMap, currentPose.torsoError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderLeft, errorMap, currentPose.torsoError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderRight, errorMap, currentPose.torsoError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.Spine, errorMap, currentPose.torsoError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.Spine, JointType.HipCenter, errorMap, currentPose.torsoError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipLeft, errorMap, currentPose.torsoError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipRight, errorMap, currentPose.torsoError);
 
             // Left Arm
-            this.DrawBone(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft, correctBonePen);
-            this.DrawBone(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft, correctBonePen);
-            this.DrawBone(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft, correctBonePen);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft, errorMap, currentPose.leftArmError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft, errorMap, currentPose.leftArmError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft, errorMap, currentPose.leftArmError);
 
             // Right Arm
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.WristRight, JointType.HandRight, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight, errorMap, currentPose.rightArmError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight, errorMap, currentPose.rightArmError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.WristRight, JointType.HandRight, errorMap, currentPose.rightArmError);
 
             // Left Leg
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipLeft, JointType.KneeLeft, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.KneeLeft, JointType.AnkleLeft, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.AnkleLeft, JointType.FootLeft, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipLeft, JointType.KneeLeft, errorMap, currentPose.leftLegError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.KneeLeft, JointType.AnkleLeft, errorMap, currentPose.leftLegError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.AnkleLeft, JointType.FootLeft, errorMap, currentPose.leftLegError);
 
             // Right Leg
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipRight, JointType.KneeRight, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.KneeRight, JointType.AnkleRight, errorMap);
-            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.AnkleRight, JointType.FootRight, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipRight, JointType.KneeRight, errorMap, currentPose.rightLegError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.KneeRight, JointType.AnkleRight, errorMap, currentPose.rightLegError);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.AnkleRight, JointType.FootRight, errorMap, currentPose.rightLegError);
 
             // Render Joints
             foreach (Joint joint in skeleton.Joints)
@@ -643,7 +688,17 @@ namespace FinalProject_KinectCoach
             }
         }
 
-        private void CheckErrorAndDrawBone(Skeleton skeleton, DrawingContext drawingContext, JointType jointType0, JointType jointType1, Dictionary<JointType, double> errorMap)
+        /// <summary>
+        /// Draw a bone with the correct color, depending on the error of that joint and the threshold passed
+        /// </summary>
+        /// <param name="skeleton"></param>
+        /// <param name="drawingContext"></param>
+        /// <param name="jointType0"></param>
+        /// <param name="jointType1"></param>
+        /// <param name="errorMap"></param>
+        /// <param name="errorThreshold"></param>
+        private void CheckErrorAndDrawBone(Skeleton skeleton, DrawingContext drawingContext, JointType jointType0,
+            JointType jointType1, Dictionary<JointType, double> errorMap, double errorThreshold)
         {
             double error0 = errorMap[jointType0];
             double error1 = errorMap[jointType1];
@@ -708,7 +763,6 @@ namespace FinalProject_KinectCoach
         //
         // Currently Unused
         ////////////////////
-
         /// <summary>
         /// Number of milliseconds between each read of audio data from the stream.
         /// Faster polling (few tens of ms) ensures a smoother audio stream visualization.
@@ -911,7 +965,7 @@ namespace FinalProject_KinectCoach
         }
 
         ////////////////////
-        // TRAINING DATA AND LAYOVER CODE
+        // MENU CODE
         ////////////////////
 
         /// <summary>
@@ -925,20 +979,54 @@ namespace FinalProject_KinectCoach
             t.Show();
         }
 
-        private List<Skeleton> trainingFrames = new List<Skeleton>();
-        private bool drawComparison = false;
-        private bool compareEngarde = false;
+        ////////////////////
+        // POSE CHECKING CODE
+        ////////////////////
+
+        private bool comparePose = false;
+        private bool drawComparisonPose = false;
+
+        private Pose currentPose = null;
+
+        private Pose enGardePose = null;
+        private Pose extensionPose = null;
+        private Pose lungePose = null;
 
         private void checkEngarde()
         {
-            trainingFrames = KinectFileUtils.ReadRecordingFile(recordDirectory + "\\engarde.txt");
-            compareEngarde = true;
+            if (enGardePose == null)
+            {
+                enGardePose = Pose.getPose(recordDirectory + "\\engarde.txt").setErrors(0.08, 100, 0.08, 0.1, 0.1);
+            }
+            currentPose = enGardePose;
+            comparePose = true;
         }
 
-        private void clearTrainingFrames()
+        private void checkExtension()
         {
-            trainingFrames = new List<Skeleton>();
-            compareEngarde = false;
+            if (extensionPose == null)
+            {
+                extensionPose = Pose.getPose(recordDirectory + "\\engarde.txt").setErrors(0.08, 0.3, 0.08, 0.1, 0.1);
+            }
+            currentPose = extensionPose;
+            comparePose = true;
+        }
+
+        private void checkLunge()
+        {
+            if (lungePose == null)
+            {
+                lungePose = Pose.getPose(recordDirectory + "\\engarde.txt").setErrors(0.08, 0.3, 0.08, 0.1, 0.1);
+            }
+            currentPose = lungePose;
+            comparePose = true;
+        }
+
+        private void clearPose()
+        {
+            currentPose = null;
+            comparePose = false;
+            drawComparisonPose = false;
         }
     }
 }

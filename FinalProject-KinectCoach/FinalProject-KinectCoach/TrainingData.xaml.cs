@@ -65,7 +65,7 @@ namespace FinalProject_KinectCoach
         /// <summary>
         /// Pen used for drawing bones that are currently tracked
         /// </summary>
-        private Pen trackedBonePen = new Pen(Brushes.Red, 6);
+        private Pen trackedBonePen = new Pen(Brushes.DarkBlue, 6);
 
         /// <summary>
         /// Pen used for drawing bones that are currently inferred
@@ -120,60 +120,6 @@ namespace FinalProject_KinectCoach
 
             // Display the drawing using our image control
             Image.Source = this.imageSource;
-
-            using (DrawingContext dc = this.drawingGroup.Open())
-            {
-                // Draw a transparent background to set the render size
-                dc.DrawRectangle(Brushes.LightBlue, null, new Rect(0.0, 0.0, RenderWidth, RenderHeight));
-            }
-        }
-
-        /// <summary>
-        /// Event handler for Kinect sensor's SkeletonFrameReady event
-        /// </summary>
-        /// <param name="sender">object sending the event</param>
-        /// <param name="e">event arguments</param>
-        private void SensorSkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
-        {
-            Skeleton[] skeletons = new Skeleton[0];
-
-            using (SkeletonFrame skeletonFrame = e.OpenSkeletonFrame())
-            {
-                if (skeletonFrame != null)
-                {
-                    skeletons = new Skeleton[skeletonFrame.SkeletonArrayLength];
-                    skeletonFrame.CopySkeletonDataTo(skeletons);
-                }
-            }
-
-            using (DrawingContext dc = this.drawingGroup.Open())
-            {
-                // Draw a transparent background to set the render size
-                dc.DrawRectangle(Brushes.LightBlue, null, new Rect(0.0, 0.0, RenderWidth, RenderHeight));
-
-                if (skeletons.Length != 0)
-                {
-                    foreach (Skeleton skel in skeletons)
-                    {
-                        if (skel.TrackingState == SkeletonTrackingState.Tracked)
-                        {
-                            this.DrawBonesAndJoints(skel, dc);
-                        }
-                        else if (skel.TrackingState == SkeletonTrackingState.PositionOnly)
-                        {
-                            dc.DrawEllipse(
-                            this.centerPointBrush,
-                            null,
-                            this.SkeletonPointToScreen(skel.Position),
-                            BodyCenterThickness,
-                            BodyCenterThickness);
-                        }
-                    }
-                }
-
-                // prevent drawing outside of our render area
-                this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, RenderWidth, RenderHeight));
-            }
         }
 
         /// <summary>
@@ -317,7 +263,7 @@ namespace FinalProject_KinectCoach
         {
             frames = KinectFileUtils.ReadRecordingFile(filename);
 
-            FrameCount.Text = frames.Count + " frames";
+            FrameCount.Text = "1/" + frames.Count + " frames";
             currentFrame = 0;
             drawFileFrame();
         }
@@ -326,6 +272,9 @@ namespace FinalProject_KinectCoach
         {
             using (DrawingContext dc = this.drawingGroup.Open())
             {
+                // Draw a transparent background to set the render size
+                dc.DrawRectangle(Brushes.LightBlue, null, new Rect(0.0, 0.0, RenderWidth, RenderHeight));
+                
                 DrawBonesAndJoints(frames.ElementAt(currentFrame), dc);
             }
         }
@@ -336,6 +285,7 @@ namespace FinalProject_KinectCoach
             if (currentFrame != 0)
             {
                 currentFrame -= 1;
+                FrameCount.Text = (currentFrame+1) + "/" + frames.Count + " frames";
                 drawFileFrame();
             }
         }
@@ -345,6 +295,7 @@ namespace FinalProject_KinectCoach
             if (currentFrame != (frames.Count-1))
             {
                 currentFrame += 1;
+                FrameCount.Text = (currentFrame + 1) + "/" + frames.Count + " frames";
                 drawFileFrame();
             }
         }

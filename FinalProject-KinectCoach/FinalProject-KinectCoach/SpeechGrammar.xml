@@ -1,8 +1,20 @@
-﻿<grammar version="1.0" xml:lang="en-US" root="rootRule" tag-format="semantics/1.0-literals" xmlns="http://www.w3.org/2001/06/grammar">
+﻿<grammar version="1.0" xml:lang="en-US" root="rootRule" tag-format="semantics/1.0" xmlns="http://www.w3.org/2001/06/grammar">
   <rule id="rootRule">
     <one-of>
       <item>
-        <tag>RECORD</tag>
+        <ruleref uri="#simple"/>
+      </item>
+      <item>
+        <ruleref uri="#pose"/>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="simple">
+    <tag> out.type="simple";</tag>
+    <one-of>
+      <item>
+        <tag>out.command="recording";</tag>
         <one-of>
           <item> record </item>
           <item> recording </item>
@@ -10,31 +22,47 @@
         </one-of>
       </item>
       <item>
-        <tag>STOPREC</tag>
+        <tag>out.command="stoprecording";</tag>
         <one-of>
           <item> stop </item>
           <item> stop recording </item>
         </one-of>
       </item>
       <item>
-        <tag>ENGARDE</tag>
+        <tag>out.command="show";</tag>
         <one-of>
-          <item> on guard </item>
-          <item> ready </item>
+          <item> show me </item>
+          <item> show me how </item>
+          <item> show </item>
         </one-of>
       </item>
       <item>
-        <tag>SHOW</tag>
+        <tag>out.command="hide";</tag>
         <one-of>
-          <item> show me</item>
+          <item> hide </item>
+          <item> got it </item>
         </one-of>
       </item>
       <item>
-        <tag>CLEAR</tag>
+        <tag>out.command="clear";</tag>
         <one-of>
           <item> clear </item>
         </one-of>
       </item>
+    </one-of>
+  </rule>
+  
+  <rule id="pose">
+    <item> check my </item>
+    <ruleref uri="#poses" />
+    <tag> out.type="pose"; out.pose=rules.latest(); </tag>
+  </rule>
+
+  <rule id="poses">
+    <one-of>
+      <item>ready</item>
+      <item>extension</item>
+      <item>lunge</item>
     </one-of>
   </rule>
 </grammar>
