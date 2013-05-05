@@ -64,6 +64,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="KinectFileUtils.cs" />
     <Compile Include="TrainingData.xaml.cs">
       <DependentUpon>TrainingData.xaml</DependentUpon>
     </Compile>

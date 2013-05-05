@@ -1,7 +1,8 @@
 ﻿<Window x:Class="FinalProject_KinectCoach.TrainingData"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="TrainingData" Height="650" Width="700">
+        Title="Training Data" Height="650" Width="700"
+        Loaded="WindowLoaded" >
     <Window.Resources>
         <SolidColorBrush x:Key="MediumGreyBrush" Color="#ff6e6e6e"/>
     </Window.Resources>
@@ -19,9 +20,21 @@
                 <TextBlock DockPanel.Dock="Right" Margin="0,0,-1,0" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="{StaticResource MediumGreyBrush}" FontFamily="Segoe UI" FontSize="12" ><Run Text="6.835 Spring 2013"/></TextBlock>
             </StackPanel>
         </DockPanel>
+        <ScrollViewer Grid.Row="1" Visibility="Collapsed">
+            <TextBlock FontSize="16" Name="TestText" />
+        </ScrollViewer>
         <Viewbox Grid.Row="1" Stretch="Uniform" Margin="0 0 0 0">
             <Image Name="Image" Width="640" Height="480"/>
         </Viewbox>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,3,0" VerticalAlignment="Center">
+            <TextBox Name="FileNameTextBox" Margin="0 0 -1 0" Width="200px" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="12" ></TextBox>
+            <Button Margin="10,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="16" Click="openFileDialog"><Run Text="Browse"/></Button>
+        </StackPanel>
+        <DockPanel Grid.Row="3" Margin="0 0 0 10">
+            <Button DockPanel.Dock="Left"  Margin="10 0 -1 0" HorizontalAlignment="Left" VerticalAlignment="Bottom"  FontFamily="Segoe UI" FontSize="16" Click="PreviousFrame" MouseMove="PreviousFrame">Previous Frame</Button>
+            <Button DockPanel.Dock="Right"  Margin="10 0 -1 0" HorizontalAlignment="Right" VerticalAlignment="Bottom"  FontFamily="Segoe UI" FontSize="16" Click="NextFrame" MouseMove="NextFrame">Next Frame</Button>
+            <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="16" Name="FrameCount">Frame Count</TextBlock>
+        </DockPanel>
     </Grid>
 
 </Window>

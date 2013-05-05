@@ -16,6 +16,25 @@
           <item> stop recording </item>
         </one-of>
       </item>
+      <item>
+        <tag>ENGARDE</tag>
+        <one-of>
+          <item> on guard </item>
+          <item> ready </item>
+        </one-of>
+      </item>
+      <item>
+        <tag>SHOW</tag>
+        <one-of>
+          <item> show me</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>CLEAR</tag>
+        <one-of>
+          <item> clear </item>
+        </one-of>
+      </item>
     </one-of>
   </rule>
 </grammar>

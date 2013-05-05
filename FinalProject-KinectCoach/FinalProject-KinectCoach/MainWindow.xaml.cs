@@ -266,10 +266,19 @@ namespace FinalProject_KinectCoach
                         this.statusBarText.Text = "";
                         startRecording();
                         break;
-
                     case "STOPREC":
                         this.statusBarText.Text = "";
                         stopRecording();
+                        break;
+                    case "ENGARDE":
+                        checkEngarde();
+                        break;
+                    case "SHOW":
+                        drawComparison = true;
+                        break;
+                    case "CLEAR":
+                        drawComparison = false;
+                        clearTrainingFrames();
                         break;
                 }
             }
@@ -336,7 +345,10 @@ namespace FinalProject_KinectCoach
         /// <summary>
         /// Pen used for drawing bones that are currently tracked
         /// </summary>
-        private Pen trackedBonePen = new Pen(Brushes.Red, 6);
+        private Pen trackedBonePen = new Pen(Brushes.DarkBlue, 6);
+
+        private Pen correctBonePen = new Pen(Brushes.Green, 6);
+        private Pen incorrectBonePen = new Pen(Brushes.Red, 6);
 
         /// <summary>
         /// Pen used for drawing bones that are currently inferred
@@ -418,13 +430,31 @@ namespace FinalProject_KinectCoach
 
                 if (skeletons.Length != 0)
                 {
+                    if (drawComparison)
+                    {
+                        foreach (Skeleton sk in trainingFrames)
+                        {
+                            Pen oldPen = trackedBonePen;
+                            trackedBonePen = new Pen(Brushes.DarkGreen, 6);
+                            this.DrawBonesAndJoints(sk, dc);
+                            trackedBonePen = oldPen;
+                        }
+                    }
+
                     foreach (Skeleton skel in skeletons)
                     {
                         RenderClippedEdges(skel, dc);
 
                         if (skel.TrackingState == SkeletonTrackingState.Tracked)
                         {
-                            this.DrawBonesAndJoints(skel, dc);
+                            if (compareEngarde)
+                            {
+                                this.DrawBonesAndJointWithComparison(skel, trainingFrames.ElementAt(0), dc);
+                            }
+                            else
+                            {
+                                this.DrawBonesAndJoints(skel, dc);
+                            }
                         }
                         else if (skel.TrackingState == SkeletonTrackingState.PositionOnly)
                         {
@@ -457,33 +487,33 @@ namespace FinalProject_KinectCoach
             }
 
             // Render Torso
-            this.DrawBone(skeleton, drawingContext, JointType.Head, JointType.ShoulderCenter);
-            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderLeft);
-            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderRight);
-            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.Spine);
-            this.DrawBone(skeleton, drawingContext, JointType.Spine, JointType.HipCenter);
-            this.DrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipLeft);
-            this.DrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipRight);
+            this.DrawBone(skeleton, drawingContext, JointType.Head, JointType.ShoulderCenter, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderLeft, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderRight, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.Spine, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.Spine, JointType.HipCenter, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipLeft, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipRight, trackedBonePen);
 
             // Left Arm
-            this.DrawBone(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft);
-            this.DrawBone(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft);
-            this.DrawBone(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft);
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft, trackedBonePen);
 
             // Right Arm
-            this.DrawBone(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight);
-            this.DrawBone(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight);
-            this.DrawBone(skeleton, drawingContext, JointType.WristRight, JointType.HandRight);
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.WristRight, JointType.HandRight, trackedBonePen);
 
             // Left Leg
-            this.DrawBone(skeleton, drawingContext, JointType.HipLeft, JointType.KneeLeft);
-            this.DrawBone(skeleton, drawingContext, JointType.KneeLeft, JointType.AnkleLeft);
-            this.DrawBone(skeleton, drawingContext, JointType.AnkleLeft, JointType.FootLeft);
+            this.DrawBone(skeleton, drawingContext, JointType.HipLeft, JointType.KneeLeft, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.KneeLeft, JointType.AnkleLeft, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.AnkleLeft, JointType.FootLeft, trackedBonePen);
 
             // Right Leg
-            this.DrawBone(skeleton, drawingContext, JointType.HipRight, JointType.KneeRight);
-            this.DrawBone(skeleton, drawingContext, JointType.KneeRight, JointType.AnkleRight);
-            this.DrawBone(skeleton, drawingContext, JointType.AnkleRight, JointType.FootRight);
+            this.DrawBone(skeleton, drawingContext, JointType.HipRight, JointType.KneeRight, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.KneeRight, JointType.AnkleRight, trackedBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.AnkleRight, JointType.FootRight, trackedBonePen);
 
             // Render Joints
             foreach (Joint joint in skeleton.Joints)
@@ -526,7 +556,7 @@ namespace FinalProject_KinectCoach
         /// <param name="drawingContext">drawing context to draw to</param>
         /// <param name="jointType0">joint to start drawing from</param>
         /// <param name="jointType1">joint to end drawing at</param>
-        private void DrawBone(Skeleton skeleton, DrawingContext drawingContext, JointType jointType0, JointType jointType1)
+        private void DrawBone(Skeleton skeleton, DrawingContext drawingContext, JointType jointType0, JointType jointType1, Pen BonePen)
         {
             Joint joint0 = skeleton.Joints[jointType0];
             Joint joint1 = skeleton.Joints[jointType1];
@@ -549,11 +579,92 @@ namespace FinalProject_KinectCoach
             Pen drawPen = this.inferredBonePen;
             if (joint0.TrackingState == JointTrackingState.Tracked && joint1.TrackingState == JointTrackingState.Tracked)
             {
-                drawPen = this.trackedBonePen;
+                drawPen = BonePen;
             }
 
             drawingContext.DrawLine(drawPen, this.SkeletonPointToScreen(joint0.Position), this.SkeletonPointToScreen(joint1.Position));
         }
+
+
+        private double errorThreshold = 0.1;
+
+        private void DrawBonesAndJointWithComparison(Skeleton skeleton, Skeleton compare, DrawingContext drawingContext)
+        {
+            Dictionary<JointType, double> errorMap = new Dictionary<JointType, double>();
+
+            SkeletonPoint shift = new SkeletonPoint();
+            shift.X = compare.Joints[JointType.HipCenter].Position.X - skeleton.Joints[JointType.HipCenter].Position.X;
+            shift.Y = compare.Joints[JointType.HipCenter].Position.Y - skeleton.Joints[JointType.HipCenter].Position.Y;
+            shift.Z = compare.Joints[JointType.HipCenter].Position.Z - skeleton.Joints[JointType.HipCenter].Position.Z;
+
+            foreach (Joint j in skeleton.Joints) 
+            {
+                Joint jc = compare.Joints[j.JointType];
+                SkeletonPoint p = j.Position;
+                SkeletonPoint pc = jc.Position;
+
+                double error = Math.Sqrt(Math.Pow(p.X + shift.X - pc.X, 2) + Math.Pow(p.Y + shift.Y - pc.Y, 2) + Math.Pow(p.Z + shift.Z - pc.Z, 2));
+                errorMap.Add(j.JointType, error);
+            }
+
+            // Render Torso
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.Head, JointType.ShoulderCenter, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderLeft, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderRight, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.Spine, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.Spine, JointType.HipCenter, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipLeft, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipRight, errorMap);
+
+            // Left Arm
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft, correctBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft, correctBonePen);
+            this.DrawBone(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft, correctBonePen);
+
+            // Right Arm
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.WristRight, JointType.HandRight, errorMap);
+
+            // Left Leg
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipLeft, JointType.KneeLeft, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.KneeLeft, JointType.AnkleLeft, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.AnkleLeft, JointType.FootLeft, errorMap);
+
+            // Right Leg
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.HipRight, JointType.KneeRight, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.KneeRight, JointType.AnkleRight, errorMap);
+            this.CheckErrorAndDrawBone(skeleton, drawingContext, JointType.AnkleRight, JointType.FootRight, errorMap);
+
+            // Render Joints
+            foreach (Joint joint in skeleton.Joints)
+            {
+                drawingContext.DrawEllipse(this.trackedJointBrush, null, this.SkeletonPointToScreen(joint.Position), JointThickness, JointThickness);   
+            }
+        }
+
+        private void CheckErrorAndDrawBone(Skeleton skeleton, DrawingContext drawingContext, JointType jointType0, JointType jointType1, Dictionary<JointType, double> errorMap)
+        {
+            double error0 = errorMap[jointType0];
+            double error1 = errorMap[jointType1];
+
+            Pen bonePen;
+
+            if (error0 > errorThreshold || error1 > errorThreshold)
+            {
+                bonePen = incorrectBonePen;
+            }
+            else
+            {
+                bonePen = correctBonePen;
+            }
+
+            DrawBone(skeleton, drawingContext, jointType0, jointType1, bonePen);
+        }
+
+        ////////////////////
+        // RECORDING CODE
+        ////////////////////
 
         private string recordDirectory = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
         private string recordFileName;
@@ -799,15 +910,35 @@ namespace FinalProject_KinectCoach
             }
         }
 
+        ////////////////////
+        // TRAINING DATA AND LAYOVER CODE
+        ////////////////////
+
         /// <summary>
         /// Event handler when user selects "Training Data" from view menu
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void viewTrainingData (object sender, RoutedEventArgs e)
+        private void viewTrainingData(object sender, RoutedEventArgs e)
         {
-            TrainingData t = new TrainingData();
+            TrainingData t = new TrainingData(sensor);
             t.Show();
+        }
+
+        private List<Skeleton> trainingFrames = new List<Skeleton>();
+        private bool drawComparison = false;
+        private bool compareEngarde = false;
+
+        private void checkEngarde()
+        {
+            trainingFrames = KinectFileUtils.ReadRecordingFile(recordDirectory + "\\engarde.txt");
+            compareEngarde = true;
+        }
+
+        private void clearTrainingFrames()
+        {
+            trainingFrames = new List<Skeleton>();
+            compareEngarde = false;
         }
     }
 }
