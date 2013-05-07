@@ -20,11 +20,25 @@ namespace FinalProject_KinectCoach
     class CoachSpeech
     {
         private SpeechSynthesizer synth;
+        public bool isSpeaking;
 
         public CoachSpeech()
         {
             synth = new SpeechSynthesizer();
             synth.SetOutputToDefaultAudioDevice();
+
+            synth.SpeakStarted += synth_SpeakStarted;
+            synth.SpeakCompleted += synth_SpeakCompleted;
+        }
+
+        void synth_SpeakStarted(object sender, SpeakStartedEventArgs e)
+        {
+            isSpeaking = true;
+        }
+
+        void synth_SpeakCompleted(object sender, SpeakCompletedEventArgs e)
+        {
+            isSpeaking = false;
         }
 
         public void speak(string phrase)

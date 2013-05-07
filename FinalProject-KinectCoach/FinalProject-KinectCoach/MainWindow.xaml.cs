@@ -211,7 +211,7 @@ namespace FinalProject_KinectCoach
                 ////speechEngine.UpdateRecognizerSetting("AdaptationOn", 0);
 
                 speechEngine.SetInputToAudioStream(
-                this.audioStream, new SpeechAudioFormatInfo(EncodingFormat.Pcm, 16000, 16, 1, 32000, 2, null));
+                    this.audioStream, new SpeechAudioFormatInfo(EncodingFormat.Pcm, 16000, 16, 1, 32000, 2, null));
                 speechEngine.RecognizeAsync(RecognizeMode.Multiple);
             }
             else
@@ -259,10 +259,17 @@ namespace FinalProject_KinectCoach
         /// </summary>
         /// <param name="sender">object sending the event.</param>
         /// <param name="e">event arguments.</param>
-        private void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
+        public void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
+            // Ignore speech if the coach is talking
+            if (coach.isSpeaking)
+            {
+                this.statusBarText.Text = "Speech ignored, coach is speaking";
+                return;
+            }
+
             // Speech utterance confidence below which we treat speech as if it hadn't been heard
-            const double ConfidenceThreshold = 0.3;
+            const double ConfidenceThreshold = 0.6;
 
             if (e.Result.Confidence >= ConfidenceThreshold)
             {
@@ -810,6 +817,7 @@ namespace FinalProject_KinectCoach
 
         private void startRecording()
         {
+            coach.speak("jellyfish");
             recording = true;
             recordFileName = string.Format("recording-{0:yyyy-MM-dd_hh-mm-ss-tt}.txt", DateTime.Now);
             recordingSpan.Foreground = Brushes.DeepSkyBlue;

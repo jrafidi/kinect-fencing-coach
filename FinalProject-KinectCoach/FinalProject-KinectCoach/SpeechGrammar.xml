@@ -52,12 +52,12 @@
           <item> once more </item>
         </one-of>
       </item>
-<!--      <item>
+      <item>
         <tag>out.command="exit";</tag>
         <one-of>
           <item> exit coach application </item>
         </one-of>
-      </item>-->
+      </item>
       <item>
         <tag>out.command="clear";</tag>
         <one-of>
