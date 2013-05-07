@@ -7,6 +7,9 @@
       <item>
         <ruleref uri="#pose"/>
       </item>
+      <item>
+        <ruleref uri="#action"/>
+      </item>
     </one-of>
   </rule>
 
@@ -18,7 +21,6 @@
         <one-of>
           <item> record </item>
           <item> recording </item>
-          <item> start recording </item>
         </one-of>
       </item>
       <item>
@@ -44,6 +46,19 @@
         </one-of>
       </item>
       <item>
+        <tag>out.command="again";</tag>
+        <one-of>
+          <item> again </item>
+          <item> once more </item>
+        </one-of>
+      </item>
+<!--      <item>
+        <tag>out.command="exit";</tag>
+        <one-of>
+          <item> exit coach application </item>
+        </one-of>
+      </item>-->
+      <item>
         <tag>out.command="clear";</tag>
         <one-of>
           <item> clear </item>
@@ -62,6 +77,20 @@
     <one-of>
       <item>ready</item>
       <item>extension</item>
+      <item>lunge</item>
+    </one-of>
+  </rule>
+
+  <rule id="action">
+    <item> watch my </item>
+    <ruleref uri="#actions"/>
+    <tag>out.type="action"; out.action=rules.latest(); </tag>
+  </rule>
+
+  <rule id="actions">
+    <one-of>
+      <item>advance</item>
+      <item>retreat</item>
       <item>lunge</item>
     </one-of>
   </rule>

@@ -168,5 +168,129 @@ namespace FinalProject_KinectCoach
             }
         }
 
+        public static List<Skeleton> alignFrames(List<Skeleton> skels, int nFrames)
+        {
+            int diff = skels.Count - nFrames;
+            if (diff == 0)
+            {
+                return skels;
+            }
+            else if (diff < 0)
+            {
+                return interpolateFrames(skels, nFrames);
+            }
+            else
+            {
+                return removeFrames(skels, nFrames);
+            }
+        }
+
+        private static List<Skeleton> interpolateFrames(List<Skeleton> skels, int nFrames) 
+        {
+            int diff = nFrames - skels.Count;
+            List<Skeleton> result = skels;
+
+            List<double> dists = new List<double>();
+            for (int i = 0; i < skels.Count - 1; i++)
+            {
+                dists.Add(getDistBetweenFrames(skels.ElementAt(i), skels.ElementAt(i+1)));
+            }
+
+            for (int i = 0; i< diff; i++) 
+            {
+                double max = dists.Max();
+                int index = dists.IndexOf(max);
+
+                Skeleton insert = getMidFrame(skels.ElementAt(index), skels.ElementAt(index+1));
+                result.Insert(index, insert);
+                dists.RemoveAt(index);
+            }
+
+            return result;
+        }
+
+        private static List<Skeleton> removeFrames(List<Skeleton> skels, int nFrames) 
+        {
+            int diff = skels.Count - nFrames;
+            List<Skeleton> result = new List<Skeleton>();
+
+            List<double> dists = new List<double>();
+            for (int i = 0; i < skels.Count - 1; i++)
+            {
+                dists.Add(getDistBetweenFrames(skels.ElementAt(i), skels.ElementAt(i+1)));
+            }
+
+            List<int> ignore = new List<int>();
+            int j = 0;
+            while (j < diff)
+            {
+                double min = dists.Min();
+                int index = dists.IndexOf(min);
+                if (index < skels.Count - 10) {
+                    ignore.Add(index);
+                    j++;
+                }
+                dists.RemoveAt(index);
+            }
+
+            for (int i = 0; i < skels.Count; i++) 
+            {
+                if (ignore.Contains(i)) {
+                    continue;
+                }
+
+                result.Add(skels.ElementAt(i));
+            }
+
+            return result;
+        }
+
+        private static double getDistBetweenFrames(Skeleton frame1, Skeleton frame2)
+        {
+            double dist = 0;
+
+            foreach (Joint j in frame1.Joints)
+            {
+                Joint jc = frame2.Joints[j.JointType];
+                SkeletonPoint p = j.Position;
+                SkeletonPoint pc = jc.Position;
+
+                dist += Math.Sqrt(Math.Pow(p.X - pc.X, 2) + Math.Pow(p.Y - pc.Y, 2) + Math.Pow(p.Z - pc.Z, 2));
+            }
+            return dist;
+        }
+
+        private static Skeleton getMidFrame(Skeleton frame1, Skeleton frame2)
+        {
+            Skeleton mid = new Skeleton();
+
+            foreach (Joint j1 in frame1.Joints)
+            {
+                Joint j2 = frame2.Joints[j1.JointType];
+
+                Joint j = mid.Joints[j1.JointType];
+                j.TrackingState = j1.TrackingState;
+
+                SkeletonPoint p = new SkeletonPoint();
+                p.X = (j1.Position.X + j2.Position.X) / 2.0f;
+                p.Y = (j1.Position.Y + j2.Position.Y) / 2.0f;
+                p.Z = (j1.Position.Z + j2.Position.Z) / 2.0f;
+
+                j.Position = p;
+                mid.Joints[j.JointType] = j;
+            }
+
+            return mid;
+        }
+
+        public static double totalDistTraveled(List<Skeleton> frames)
+        {
+            double result = 0;
+            for (int i = 0; i < frames.Count - 1; i++)
+            {
+                result += getDistBetweenFrames(frames.ElementAt(i), frames.ElementAt(i + 1));
+            }
+            return result;
+        }
     }
 }

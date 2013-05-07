@@ -1,0 +1,21 @@
+FRAME
+HipCenter, Tracked, 0.219398, -0.1830121, 2.705073
+Spine, Tracked, 0.2283786, -0.1294489, 2.690501
+ShoulderCenter, Tracked, 0.2713133, 0.1386758, 2.630794
+Head, Tracked, 0.3035364, 0.3159035, 2.592738
+ShoulderLeft, Tracked, 0.1025435, 0.06848384, 2.655032
+ElbowLeft, Tracked, -0.1296521, -0.02413284, 2.753905
+WristLeft, Tracked, -0.3628218, -0.1138315, 2.864402
+HandLeft, Tracked, -0.4855825, -0.1415484, 2.934926
+ShoulderRight, Tracked, 0.4268486, 0.06176503, 2.640075
+ElbowRight, Tracked, 0.6441752, 0.189591, 2.49963
+WristRight, Tracked, 0.8104852, 0.3802266, 2.372335
+HandRight, Tracked, 0.8635258, 0.4704073, 2.30243
+HipLeft, Tracked, 0.1469906, -0.2504162, 2.714221
+KneeLeft, Tracked, -0.1956891, -0.6129915, 2.912408
+AnkleLeft, Tracked, -0.4630773, -0.928853, 3.102385
+FootLeft, Tracked, -0.4387823, -1.001631, 3.107213
+HipRight, Tracked, 0.2674071, -0.2577866, 2.72254
+KneeRight, Tracked, 0.5103256, -0.5776657, 2.624411
+AnkleRight, Tracked, 0.554761, -0.9290712, 2.605972
+FootRight, Tracked, 0.5551439, -0.9769735, 2.529254

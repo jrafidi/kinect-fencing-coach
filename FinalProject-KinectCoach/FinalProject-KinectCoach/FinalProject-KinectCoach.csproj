@@ -64,6 +64,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CoachSpeech.cs" />
+    <Compile Include="FencingAction.cs" />
     <Compile Include="KinectFileUtils.cs" />
     <Compile Include="Pose.cs" />
     <Compile Include="TrainingData.xaml.cs">
@@ -110,7 +112,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="SpeechGrammar.xml" />
+    <Resource Include="SpeechGrammar.xml">
+      <SubType>Designer</SubType>
+    </Resource>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Kinect.ico" />

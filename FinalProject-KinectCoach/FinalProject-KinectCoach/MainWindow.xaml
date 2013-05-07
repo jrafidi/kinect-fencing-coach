@@ -58,11 +58,7 @@
         <TextBlock Grid.Row="4" HorizontalAlignment="Center" FontSize="24" Margin="120,0,119,20" Foreground="{StaticResource MediumGreyBrush}">
             <Span Name="recordingSpan">Recording</Span>
         </TextBlock>
-        <Image Width="607" Height="100" x:Name="waveDisplay" Grid.Row="5"  VerticalAlignment="Top" HorizontalAlignment="Center">
-            <Image.RenderTransform>
-                <TranslateTransform X="0.13" Y="0.0353"/>
-            </Image.RenderTransform>
-        </Image>
+        <TextBlock Name="signal" Grid.Row="5" FontSize="60" HorizontalAlignment="Center" >Wait</TextBlock>
         <StatusBar Grid.Row="6" Height="30" HorizontalAlignment="Stretch" Name="statusBar" VerticalAlignment="Bottom" Background="White" Foreground="Red">
             <StatusBarItem HorizontalAlignment="Center" Padding="0">
                 <TextBlock HorizontalAlignment="Center" Name="statusBarText"></TextBlock>
