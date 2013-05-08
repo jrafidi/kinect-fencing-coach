@@ -198,7 +198,7 @@ namespace FinalProject_KinectCoach
 
             for (int i = 0; i< diff; i++) 
             {
-                double max = dists.Max();
+                double max = dists.Min();
                 int index = dists.IndexOf(max);
 
                 Skeleton insert = getMidFrame(skels.ElementAt(index), skels.ElementAt(index+1));
@@ -206,7 +206,7 @@ namespace FinalProject_KinectCoach
                 dists.RemoveAt(index);
             }
 
-            return result;
+            return alignFrames(result, nFrames);
         }
 
         private static List<Skeleton> removeFrames(List<Skeleton> skels, int nFrames) 
@@ -226,7 +226,7 @@ namespace FinalProject_KinectCoach
             {
                 double min = dists.Min();
                 int index = dists.IndexOf(min);
-                if (index < skels.Count - 10) {
+                if (index < skels.Count - 3) {
                     ignore.Add(index);
                     j++;
                 }
@@ -242,10 +242,10 @@ namespace FinalProject_KinectCoach
                 result.Add(skels.ElementAt(i));
             }
 
-            return result;
+            return alignFrames(result, nFrames);
         }
 
-        private static double getDistBetweenFrames(Skeleton frame1, Skeleton frame2)
+        public static double getDistBetweenFrames(Skeleton frame1, Skeleton frame2)
         {
             double dist = 0;
 

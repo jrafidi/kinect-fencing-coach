@@ -48,20 +48,14 @@
       <item>
         <tag>out.command="again";</tag>
         <one-of>
-          <item> again </item>
+          <item> redo </item>
           <item> once more </item>
-        </one-of>
-      </item>
-      <item>
-        <tag>out.command="exit";</tag>
-        <one-of>
-          <item> exit coach application </item>
         </one-of>
       </item>
       <item>
         <tag>out.command="clear";</tag>
         <one-of>
-          <item> clear </item>
+          <item> clear all </item>
         </one-of>
       </item>
     </one-of>

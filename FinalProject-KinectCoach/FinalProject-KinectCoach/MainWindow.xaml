@@ -30,8 +30,8 @@
             <Menu Width="Auto" Height="20" Background="#FFA9D1F4" DockPanel.Dock="Top"  VerticalAlignment="Top">
                 <MenuItem Header="_View" Margin="10 0 0 0">
                     <MenuItem Header="Training Data" Click="viewTrainingData"/>
-                    <MenuItem Header="Other Menu Item"/>
-                    <Separator />
+                    <MenuItem Header="Testing Data"/>
+<!--                <Separator />
                     <MenuItem>
                         <MenuItem.Header>
                             <DockPanel>
@@ -40,7 +40,7 @@
                                 <TextBlock HorizontalAlignment="Right">F2</TextBlock>
                             </DockPanel>
                         </MenuItem.Header>
-                    </MenuItem>
+                    </MenuItem>-->
                 </MenuItem>
             </Menu>
         </DockPanel>
@@ -55,15 +55,7 @@
         <Viewbox Grid.Row="3" Stretch="Uniform" Margin="0 0 0 0">
             <Image Name="Image" Width="640" Height="480"/>
         </Viewbox>
-        <TextBlock Grid.Row="4" HorizontalAlignment="Center" FontSize="24" Margin="120,0,119,20" Foreground="{StaticResource MediumGreyBrush}">
-            <Span Name="recordingSpan">Recording</Span>
-        </TextBlock>
-        <TextBlock Name="signal" Grid.Row="5" FontSize="60" HorizontalAlignment="Center" >Wait</TextBlock>
-        <StatusBar Grid.Row="6" Height="30" HorizontalAlignment="Stretch" Name="statusBar" VerticalAlignment="Bottom" Background="White" Foreground="Red">
-            <StatusBarItem HorizontalAlignment="Center" Padding="0">
-                <TextBlock HorizontalAlignment="Center" Name="statusBarText"></TextBlock>
-            </StatusBarItem>
-        </StatusBar>
+        <TextBlock Name="signal" Margin="0 0 0 20" Grid.Row="5" FontSize="60" HorizontalAlignment="Center" >Ready</TextBlock>
 
     </Grid>
 </Window>

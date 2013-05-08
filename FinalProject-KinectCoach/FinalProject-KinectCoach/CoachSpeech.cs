@@ -43,6 +43,7 @@ namespace FinalProject_KinectCoach
 
         public void speak(string phrase)
         {
+            synth.SpeakAsyncCancelAll();
             synth.SpeakAsync(phrase);
         }
 

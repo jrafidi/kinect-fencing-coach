@@ -21,8 +21,6 @@ namespace FinalProject_KinectCoach
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable",
-        Justification = "In a full-fledged application, the SpeechRecognitionEngine object should be properly disposed. For the sake of simplicity, we're omitting that code in this sample.")]
     public partial class MainWindow : Window
     {
         /// <summary>
@@ -36,6 +34,11 @@ namespace FinalProject_KinectCoach
         private SpeechRecognitionEngine speechEngine;
 
         /// <summary>
+        /// Stream of audio being captured by Kinect sensor.
+        /// </summary>
+        private Stream audioStream;
+
+        /// <summary>
         /// Speech generation coach
         /// </summary>
         private CoachSpeech coach = new CoachSpeech();
@@ -47,9 +50,6 @@ namespace FinalProject_KinectCoach
         {
             InitializeComponent();
             Application.Current.MainWindow.WindowState = WindowState.Maximized;
-
-            this.energyBitmap = new WriteableBitmap(EnergyBitmapWidth, EnergyBitmapHeight, 96, 96, PixelFormats.Indexed1, 
-                new BitmapPalette(new List<Color> { Colors.White, (Color)this.Resources["KinectPurpleColor"] }));
 
             this.KeyDown += new KeyEventHandler(OnButtonKeyDown);
         }
@@ -147,54 +147,17 @@ namespace FinalProject_KinectCoach
 
             if (null == this.sensor)
             {
-                this.statusBarText.Text = Properties.Resources.NoKinectReady;
+                signal.Text = "No Kinect detected";
                 return;
             }
 
-            // Initialize foreground pixels
-            this.foregroundPixels = new byte[EnergyBitmapHeight];
-            for (int i = 0; i < this.foregroundPixels.Length; ++i)
-            {
-                this.foregroundPixels[i] = 0xff;
-            }
-
-            // Start streaming audio!
-            this.audioStream = this.sensor.AudioSource.Start();
-
-            // Use a separate thread for capturing audio because audio stream read operations
-            // will block, and we don't want to block main UI thread.
-            this.reading = true;
-            this.readingThread = new Thread(AudioReadingThread);
-            this.readingThread.Start();
-
             RecognizerInfo ri = GetKinectRecognizer();
+            this.audioStream = this.sensor.AudioSource.Start();
 
             if (null != ri)
             {
 
                 this.speechEngine = new SpeechRecognitionEngine(ri.Id);
-
-                /****************************************************************
-                * 
-                * Use this code to create grammar programmatically rather than from
-                * a grammar file.
-                * 
-                * var directions = new Choices();
-                * directions.Add(new SemanticResultValue("forward", "FORWARD"));
-                * directions.Add(new SemanticResultValue("forwards", "FORWARD"));
-                * directions.Add(new SemanticResultValue("straight", "FORWARD"));
-                * directions.Add(new SemanticResultValue("backward", "BACKWARD"));
-                * directions.Add(new SemanticResultValue("backwards", "BACKWARD"));
-                * directions.Add(new SemanticResultValue("back", "BACKWARD"));
-                * directions.Add(new SemanticResultValue("turn left", "LEFT"));
-                * directions.Add(new SemanticResultValue("turn right", "RIGHT"));
-                *
-                * var gb = new GrammarBuilder { Culture = ri.Culture };
-                * gb.Append(directions);
-                *
-                * var g = new Grammar(gb);
-                * 
-                ****************************************************************/
 
                 // Create a grammar from grammar definition XML file.
                 using (var memoryStream = new MemoryStream(Encoding.ASCII.GetBytes(Properties.Resources.SpeechGrammar)))
@@ -204,7 +167,6 @@ namespace FinalProject_KinectCoach
                 }
 
                 speechEngine.SpeechRecognized += SpeechRecognized;
-                speechEngine.SpeechRecognitionRejected += SpeechRejected;
 
                 // For long recognition sessions (a few hours or more), it may be beneficial to turn off adaptation of the acoustic model. 
                 // This will prevent recognition accuracy from degrading over time.
@@ -216,7 +178,7 @@ namespace FinalProject_KinectCoach
             }
             else
             {
-                this.statusBarText.Text = Properties.Resources.NoSpeechRecognizer;
+                signal.Text = Properties.Resources.NoSpeechRecognizer;
             }
         }
 
@@ -227,16 +189,8 @@ namespace FinalProject_KinectCoach
         /// <param name="e">event arguments.</param>
         private void WindowClosing(object sender, CancelEventArgs e)
         {
-
-            // Tell audio reading thread to stop and wait for it to finish.
-            this.reading = false;
-            if (null != readingThread)
-            {
-                readingThread.Join();
-            }
             if (null != this.sensor)
             {
-                CompositionTarget.Rendering -= UpdateEnergy;
                 this.sensor.AudioSource.Stop();
                 this.sensor.SkeletonFrameReady -= this.SensorSkeletonFrameReady;
 
@@ -247,8 +201,8 @@ namespace FinalProject_KinectCoach
             if (null != this.speechEngine)
             {
                 this.speechEngine.SpeechRecognized -= SpeechRecognized;
-                this.speechEngine.SpeechRecognitionRejected -= SpeechRejected;
                 this.speechEngine.RecognizeAsyncStop();
+                this.speechEngine.Dispose();
             }
         }
 
@@ -264,7 +218,6 @@ namespace FinalProject_KinectCoach
             // Ignore speech if the coach is talking
             if (coach.isSpeaking)
             {
-                this.statusBarText.Text = "Speech ignored, coach is speaking";
                 return;
             }
 
@@ -273,7 +226,6 @@ namespace FinalProject_KinectCoach
 
             if (e.Result.Confidence >= ConfidenceThreshold)
             {
-                this.statusBarText.Text = "";
                 switch (e.Result.Semantics["type"].Value.ToString())
                 {
                     case "simple":
@@ -286,12 +238,17 @@ namespace FinalProject_KinectCoach
                                 stopRecording();
                                 break;
                             case "show":
-                                drawComparisonPose = true;
-                                demonstrateAction = true;
+                                if (currentPose != null)
+                                {
+                                    dm = DemoMode.POSE;
+                                }
+                                else if (currentAction != null)
+                                {
+                                    dm = DemoMode.ACTION;
+                                }
                                 break;
                             case "hide":
-                                drawComparisonPose = false;
-                                demonstrateAction = false;
+                                dm = DemoMode.NONE;
                                 break;
                             case "again":
                                 if (previousSpeech != null)
@@ -308,18 +265,7 @@ namespace FinalProject_KinectCoach
                         }
                         break;
                     case "pose":
-                        switch (e.Result.Semantics["pose"].Value.ToString())
-                        {
-                            case "ready":
-                                checkEngarde();
-                                break;
-                            case "extension":
-                                checkExtension();
-                                break;
-                            case "lunge":
-                                checkLunge();
-                                break;
-                        }
+                        checkPose(e.Result.Semantics["pose"].Value.ToString());
                         previousSpeech = e;
                         break;
                     case "action":
@@ -337,20 +283,6 @@ namespace FinalProject_KinectCoach
                         break;
                 }
             }
-            else
-            {
-                this.statusBarText.Text = "Speech Not Recognized";
-            }
-        }
-
-        /// <summary>
-        /// Handler for rejected speech events.
-        /// </summary>
-        /// <param name="sender">object sending the event.</param>
-        /// <param name="e">event arguments.</param>
-        private void SpeechRejected(object sender, SpeechRecognitionRejectedEventArgs e)
-        {
-            this.statusBarText.Text = "Speech Not Recognized (Rejected)";
         }
 
         ///////////////////
@@ -480,91 +412,86 @@ namespace FinalProject_KinectCoach
                 // Draw a transparent background to set the render size
                 dc.DrawRectangle(Brushes.LightBlue, null, new Rect(0.0, 0.0, RenderWidth, RenderHeight));
 
-                if (skeletons.Length != 0)
+                Pen oldPen = trackedBonePen;
+                switch (dm)
                 {
-                    if (currentPose != null && drawComparisonPose)
-                    {
-                        Pen oldPen = trackedBonePen;
+                    case DemoMode.POSE:
                         trackedBonePen = new Pen(Brushes.DarkGreen, 6);
                         this.DrawBonesAndJoints(currentPose.frame, dc);
-                        trackedBonePen = oldPen;
-                    }
-
-                    if (currentAction != null && demonstrateAction)
-                    {
-                        if (demoActionFrameCount == currentAction.frames.Count)
+                        break;
+                    case DemoMode.ACTION:
+                        if (actionFrameCount == currentAction.frames.Count)
                         {
-                            demoActionFrameCount = 0;
-                        }
-                        Pen oldPen = trackedBonePen;
-                        trackedBonePen = new Pen(Brushes.DarkGreen, 6);
-                        this.DrawBonesAndJoints(currentAction.frames.ElementAt(demoActionFrameCount), dc);
-                        demoActionFrameCount++;
-                        trackedBonePen = oldPen;
-                    }
-
-                    if (showCompareAction)
-                    {
-                        if (demoActionFrameCount >= currentAction.frames.Count)
-                        {
-                            demoActionFrameCount = 0;
+                            actionFrameCount = 0;
                         }
                         trackedBonePen = new Pen(Brushes.DarkGreen, 6);
-                        this.DrawBonesAndJoints(currentAction.frames.ElementAt(demoActionFrameCount), dc);
-                        trackedBonePen = new Pen(Brushes.DarkBlue, 6);
-                        this.DrawBonesAndJoints(actionFrames.ElementAt(demoActionFrameCount), dc);
-                        demoActionFrameCount++;
-                    }
+                        this.DrawBonesAndJoints(currentAction.frames.ElementAt(actionFrameCount), dc);
+                        actionFrameCount++;
+                        break;
+                }
+                trackedBonePen = oldPen;
 
-                    foreach (Skeleton skel in skeletons)
-                    {
-                        RenderClippedEdges(skel, dc);
+                bool hasDrawableSkeleton = skeletons.Length != 0;
 
-                        if (skel.TrackingState == SkeletonTrackingState.Tracked)
+                switch (cpm)
+                {
+                    case CompareMode.POSE:
+                        foreach (Skeleton skel in skeletons)
                         {
-                            if (comparePose)
+                            if (skel.TrackingState == SkeletonTrackingState.Tracked)
                             {
                                 this.DrawBonesAndJointWithComparison(skel, currentPose, dc);
-
-                                if (currentPose.matchesSkeleton(skel, 2))
+                                if (currentPose.matchesSkeleton(skel, 1))
                                 {
                                     coach.sayCorrect();
                                     clearAll();
                                 }
                             }
-
-                            else
-                            {
-                                this.DrawBonesAndJoints(skel, dc);
-                            }
-
-                            if (watchingAction)
-                            {
-                                if (!actionStarted)
-                                {
-                                    checkActionStart(skel);
-                                }
-                                else
-                                {
-                                    actionFrames.Add(skel);
-                                    checkActionEnd(skel);
-                                }
-                            }
-
                         }
-                        else if (skel.TrackingState == SkeletonTrackingState.PositionOnly)
+                        break;
+                    case CompareMode.SIMUL_ACTION:
+                        if (actionFrameCount >= currentAction.frames.Count)
                         {
-                            dc.DrawEllipse(
-                            this.centerPointBrush,
-                            null,
-                            this.SkeletonPointToScreen(skel.Position),
-                            BodyCenterThickness,
-                            BodyCenterThickness);
+                            actionFrameCount = 0;
                         }
-                    }
-                }
+                        trackedBonePen = new Pen(Brushes.DarkGreen, 6);
+                        this.DrawBonesAndJoints(currentAction.frames.ElementAt(actionFrameCount), dc);
+                        trackedBonePen = new Pen(Brushes.DarkBlue, 6);
+                        this.DrawBonesAndJoints(actionFrames.ElementAt(actionFrameCount), dc);
+                        actionFrameCount++;
+                        break;
+                    case CompareMode.NONE:
+                        if (hasDrawableSkeleton)
+                        {
+                            foreach (Skeleton skel in skeletons)
+                            {
+                                if (skel.TrackingState == SkeletonTrackingState.Tracked)
+                                {
 
-                // prevent drawing outside of our render area
+                                    if (watchingAction)
+                                    {
+                                        if (!actionStarted)
+                                        {
+                                            checkActionStart(skel);
+                                            this.DrawBonesAndJointWithComparison(skel, currentAction.startPose, dc);
+                                        }
+                                        else
+                                        {
+                                            this.DrawBonesAndJoints(skel, dc);
+                                            actionFrames.Add(skel);
+                                            checkActionEnd(skel);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        RenderClippedEdges(skel, dc);
+                                        this.DrawBonesAndJoints(skel, dc);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                }
                 this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, RenderWidth, RenderHeight));
             }
         }
@@ -705,7 +632,7 @@ namespace FinalProject_KinectCoach
         /// Pen for bones that are in the correct position
         /// </summary>
         private Pen correctBonePen = new Pen(Brushes.Green, 6);
-
+        
         /// <summary>
         /// Pen for bones who have at least one joint in the incorrect position
         /// </summary>
@@ -817,226 +744,17 @@ namespace FinalProject_KinectCoach
 
         private void startRecording()
         {
-            coach.speak("jellyfish");
             recording = true;
             recordFileName = string.Format("recording-{0:yyyy-MM-dd_hh-mm-ss-tt}.txt", DateTime.Now);
-            recordingSpan.Foreground = Brushes.DeepSkyBlue;
-            recordingSpan.FontWeight = FontWeights.Bold;
+            signal.Text = "Recording";
             trackedBonePen = new Pen(Brushes.Green, 6);
         }
 
         private void stopRecording()
         {
             recording = false;
-            recordingSpan.Foreground = (Brush)this.Resources["MediumGreyBrush"];
-            recordingSpan.FontWeight = FontWeights.Normal;
+            signal.Text = "Ready";
             trackedBonePen = new Pen(Brushes.DarkBlue, 6);
-        }
-
-        ////////////////////
-        // AUDIO STREAM CODE
-        //
-        // Currently Unused
-        ////////////////////
-        /// <summary>
-        /// Number of milliseconds between each read of audio data from the stream.
-        /// Faster polling (few tens of ms) ensures a smoother audio stream visualization.
-        /// </summary>
-        private const int AudioPollingInterval = 100;
-
-        /// <summary>
-        /// Number of samples captured from Kinect audio stream each millisecond.
-        /// </summary>
-        private const int SamplesPerMillisecond = 16;
-
-        /// <summary>
-        /// Number of bytes in each Kinect audio stream sample.
-        /// </summary>
-        private const int BytesPerSample = 2;
-
-        /// <summary>
-        /// Number of audio samples represented by each column of pixels in wave bitmap.
-        /// </summary>
-        private const int SamplesPerColumn = 40;
-
-        /// <summary>
-        /// Width of bitmap that stores audio stream energy data ready for visualization.
-        /// </summary>
-        private const int EnergyBitmapWidth = 780;
-
-        /// <summary>
-        /// Height of bitmap that stores audio stream energy data ready for visualization.
-        /// </summary>
-        private const int EnergyBitmapHeight = 195;
-
-        /// <summary>
-        /// Bitmap that contains constructed visualization for audio stream energy, ready to
-        /// be displayed. It is a 2-color bitmap with white as background color and blue as
-        /// foreground color.
-        /// </summary>
-        private readonly WriteableBitmap energyBitmap;
-
-        /// <summary>
-        /// Rectangle representing the entire energy bitmap area. Used when drawing background
-        /// for energy visualization.
-        /// </summary>
-        private readonly Int32Rect fullEnergyRect = new Int32Rect(0, 0, EnergyBitmapWidth, EnergyBitmapHeight);
-
-        /// <summary>
-        /// Array of background-color pixels corresponding to an area equal to the size of whole energy bitmap.
-        /// </summary>
-        private readonly byte[] backgroundPixels = new byte[EnergyBitmapWidth * EnergyBitmapHeight];
-
-        /// <summary>
-        /// Buffer used to hold audio data read from audio stream.
-        /// </summary>
-        private readonly byte[] audioBuffer = new byte[AudioPollingInterval * SamplesPerMillisecond * BytesPerSample];
-
-        /// <summary>
-        /// Buffer used to store audio stream energy data as we read audio.
-        /// 
-        /// We store 25% more energy values than we strictly need for visualization to allow for a smoother
-        /// stream animation effect, since rendering happens on a different schedule with respect to audio
-        /// capture.
-        /// </summary>
-        private readonly double[] energy = new double[(uint)(EnergyBitmapWidth * 1.25)];
-
-        /// <summary>
-        /// Object for locking energy buffer to synchronize threads.
-        /// </summary>
-        private readonly object energyLock = new object();
-
-        /// <summary>
-        /// Stream of audio being captured by Kinect sensor.
-        /// </summary>
-        private Stream audioStream;
-
-        /// <summary>
-        /// <code>true</code> if audio is currently being read from Kinect stream, <code>false</code> otherwise.
-        /// </summary>
-        private bool reading;
-
-        /// <summary>
-        /// Thread that is reading audio from Kinect stream.
-        /// </summary>
-        private Thread readingThread;
-
-        /// <summary>
-        /// Array of foreground-color pixels corresponding to a line as long as the energy bitmap is tall.
-        /// This gets re-used while constructing the energy visualization.
-        /// </summary>
-        private byte[] foregroundPixels;
-
-        /// <summary>
-        /// Index of next element available in audio energy buffer.
-        /// </summary>
-        private int energyIndex;
-
-        /// <summary>
-        /// Number of newly calculated audio stream energy values that have not yet been
-        /// displayed.
-        /// </summary>
-        private int newEnergyAvailable;
-
-        /// <summary>
-        /// Error between time slice we wanted to display and time slice that we ended up
-        /// displaying, given that we have to display in integer pixels.
-        /// </summary>
-        private double energyError;
-
-        /// <summary>
-        /// Last time energy visualization was rendered to screen.
-        /// </summary>
-        private DateTime? lastEnergyRefreshTime;
-
-        /// <summary>
-        /// Index of first energy element that has never (yet) been displayed to screen.
-        /// </summary>
-        private int energyRefreshIndex;
-
-        /// <summary>
-        /// Handles polling audio stream and updating visualization every tick.
-        /// </summary>
-        private void AudioReadingThread()
-        {
-            // Bottom portion of computed energy signal that will be discarded as noise.
-            // Only portion of signal above noise floor will be displayed.
-            //const double EnergyNoiseFloor = 0.2;
-
-            while (this.reading)
-            {
-                int readCount = audioStream.Read(audioBuffer, 0, audioBuffer.Length);
-
-                // Calculate energy corresponding to captured audio.
-                // In a computationally intensive application, do all the processing like
-                // computing energy, filtering, etc. in a separate thread.
-                lock (this.energyLock)
-                {
-                    List<byte> samples = new List<byte>(audioBuffer);
-                    List<short> shortSamples = new List<short>();
-                    for (int i = 0; i < readCount; i += 2)
-                    {
-                        shortSamples.Add(BitConverter.ToInt16(audioBuffer, i));
-                    }
-                    Complex[] complexSamples = shortSamples.Select(sample => new Complex((double)sample, 0.0)).ToArray();
-                    FourierTransform.DFT(complexSamples, FourierTransform.Direction.Forward);
-                    double[] magnitudes = complexSamples.Select(sample => Math.Sqrt(Math.Pow(sample.Re,2) + Math.Pow(sample.Im,2))).ToArray();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles rendering energy visualization into a bitmap.
-        /// </summary>
-        /// <param name="sender">object sending the event.</param>
-        /// <param name="e">event arguments.</param>
-        private void UpdateEnergy(object sender, EventArgs e)
-        {
-            lock (this.energyLock)
-            {
-                // Calculate how many energy samples we need to advance since the last update in order to
-                // have a smooth animation effect
-                DateTime now = DateTime.UtcNow;
-                DateTime? previousRefreshTime = this.lastEnergyRefreshTime;
-                this.lastEnergyRefreshTime = now;
-
-                // No need to refresh if there is no new energy available to render
-                if (this.newEnergyAvailable <= 0)
-                {
-                    return;
-                }
-
-                if (previousRefreshTime != null)
-                {
-                    double energyToAdvance = this.energyError + (((now - previousRefreshTime.Value).TotalMilliseconds * SamplesPerMillisecond) / SamplesPerColumn);
-                    int energySamplesToAdvance = Math.Min(this.newEnergyAvailable, (int)Math.Round(energyToAdvance));
-                    this.energyError = energyToAdvance - energySamplesToAdvance;
-                    this.energyRefreshIndex = (this.energyRefreshIndex + energySamplesToAdvance) % this.energy.Length;
-                    this.newEnergyAvailable -= energySamplesToAdvance;
-                }
-
-                // clear background of energy visualization area
-                this.energyBitmap.WritePixels(fullEnergyRect, this.backgroundPixels, EnergyBitmapWidth, 0);
-
-                // Draw each energy sample as a centered vertical bar, where the length of each bar is
-                // proportional to the amount of energy it represents.
-                // Time advances from left to right, with current time represented by the rightmost bar.
-                int baseIndex = (this.energyRefreshIndex + this.energy.Length - EnergyBitmapWidth) % this.energy.Length;
-                for (int i = 0; i < EnergyBitmapWidth; ++i)
-                {
-                    const int HalfImageHeight = EnergyBitmapHeight / 2;
-
-                    // Each bar has a minimum height of 1 (to get a steady signal down the middle) and a maximum height
-                    // equal to the bitmap height.
-                    int barHeight = (int)Math.Max(1.0, (this.energy[(baseIndex + i) % this.energy.Length] * EnergyBitmapHeight));
-
-                    // Center bar vertically on image
-                    var barRect = new Int32Rect(i, HalfImageHeight - (barHeight / 2), 1, barHeight);
-
-                    // Draw bar in foreground color
-                    this.energyBitmap.WritePixels(barRect, foregroundPixels, 1, 0);
-                }
-            }
         }
 
         ////////////////////
@@ -1058,60 +776,55 @@ namespace FinalProject_KinectCoach
         // POSE CHECKING CODE
         ////////////////////
 
-        private bool comparePose = false;
-        private bool drawComparisonPose = false;
+        private enum CompareMode
+        {
+            NONE, POSE, ACTION, SIMUL_ACTION
+        }
 
+        private enum DemoMode
+        {
+            NONE, POSE, ACTION
+        }
+
+        private CompareMode cpm = CompareMode.NONE;
+        private DemoMode dm = DemoMode.NONE;
+
+        // Normally, one would cache different poses so as to only load each type once
+        // However, these are pretty small files and there isn't any trouble loading them in
         private Pose currentPose = null;
 
-        private Pose enGardePose = null;
-        private Pose extensionPose = null;
-        private Pose lungePose = null;
-
-        private void checkEngarde()
+        private void checkPose(string pose)
         {
-            if (enGardePose == null)
+            signal.Text = "Checking " + pose;
+            currentPose = Pose.getPose(recordDirectory + "\\" + pose + ".txt");
+            switch (pose)
             {
-                enGardePose = Pose.getPose(recordDirectory + "\\engarde.txt").setErrors(0.08, 100, 0.08, 0.08, 0.08);
+                case "ready":
+                    currentPose.setErrors(0.08, 100, 0.08, 0.08, 0.08);
+                    break;
+                case "extension":
+                    currentPose.setErrors(0.08, 0.3, 0.1, 0.12, 0.1);
+                    break;
+                case "lunge":
+                    currentPose.setErrors(0.1, 0.3, 0.12, 0.13, 0.13);
+                    break;
             }
-            currentPose = enGardePose;
-            comparePose = true;
-        }
-
-        private void checkExtension()
-        {
-            if (extensionPose == null)
-            {
-                extensionPose = Pose.getPose(recordDirectory + "\\extend.txt").setErrors(0.08, 0.3, 0.1, 0.1, 0.1);
-            }
-            currentPose = extensionPose;
-            comparePose = true;
-        }
-
-        private void checkLunge()
-        {
-            if (lungePose == null)
-            {
-                lungePose = Pose.getPose(recordDirectory + "\\lunge.txt").setErrors(0.08, 0.3, 0.1, 0.13, 0.1);
-            }
-            currentPose = lungePose;
-            comparePose = true;
+            cpm = CompareMode.POSE;
         }
 
         private void clearAll()
         {
+            signal.Text = "Ready";
             currentPose = null;
-            comparePose = false;
-            drawComparisonPose = false;
-
             currentAction = null;
-            showCompareAction = false;
-            demonstrateAction = false;
+
+            dm = DemoMode.NONE;
+            cpm = CompareMode.NONE;
+
             watchingAction = false;
             actionStarted = false;
             actionFrames = new List<Skeleton>();
-            demoActionFrameCount = 0;
-
-            signal.Text = "Wait";
+            actionFrameCount = 0;
         }
 
         ////////////////////
@@ -1121,29 +834,33 @@ namespace FinalProject_KinectCoach
         private bool watchingAction = false;
         private bool actionStarted = false;
         private List<Skeleton> actionFrames = new List<Skeleton>();
+        private List<Skeleton> shiftedDemo = new List<Skeleton>();
 
-        private bool showCompareAction = false;
-
-        private bool demonstrateAction = false;
-        private int demoActionFrameCount = 0;
+        private int actionFrameCount = 0;
 
         private FencingAction currentAction = null;
 
         private void checkActionStart(Skeleton skel)
         {
-            if (currentAction.startPose.matchesSkeleton(skel, 2))
+            if (currentAction.startPose.matchesSkeleton(skel, 1))
             {
                 actionStarted = true;
-                //coach.speak("Start");
                 signal.Text = "Go";
+                coach.speak("Begin");
             }
         }
 
         private void checkActionEnd(Skeleton skel)
         {
-            double distTraveled = KinectFileUtils.totalDistTraveled(actionFrames);
-            if (currentAction.endPose.matchesSkeleton(skel, 2) && actionFrames.Count > 30 && distTraveled > 10)
+            if (actionFrames.Count < 30)
             {
+                return;
+            }
+
+            double distTraveled = KinectFileUtils.totalDistTraveled(actionFrames);
+            if (currentAction.endPose.matchesSkeleton(skel, 1) && distTraveled > 10)
+            {
+                signal.Text = "Evaluating...";
                 actionStarted = false;
                 watchingAction = false;
                 coach.speak("End");
@@ -1152,6 +869,7 @@ namespace FinalProject_KinectCoach
 
             if (actionFrames.Count > 300)
             {
+                signal.Text = "Action too long";
                 actionStarted = false;
                 coach.speak("Action timeout");
                 actionFrames = new List<Skeleton>();
@@ -1160,23 +878,20 @@ namespace FinalProject_KinectCoach
 
         private void evaluateAction()
         {
-            coach.speak("Action length was " + actionFrames.Count + " frames");
-            List<Skeleton> updatedFrames = KinectFileUtils.alignFrames(actionFrames, currentAction.frames.Count);
-            coach.speak("Updated length is " + updatedFrames.Count + " frames");
-            actionFrames = updatedFrames;
-            showCompareAction = true;
+            actionFrames = currentAction.correctedFrames(actionFrames);
+            shiftedDemo = currentAction.getShiftedFrames(actionFrames.ElementAt(0).Joints[JointType.HipCenter].Position);
+            cpm = CompareMode.SIMUL_ACTION;
+            dm = DemoMode.NONE;
         }
 
         private void watchAdvance()
         {
             clearAll();
-            if (enGardePose == null)
-            {
-                enGardePose = Pose.getPose(recordDirectory + "\\engarde.txt").setErrors(0.08, 100, 0.08, 0.08, 0.08);
-            }
-            currentAction = FencingAction.getAction(recordDirectory + "\\advance.txt", enGardePose, enGardePose).setErrors(0.08, 0.2, 0.08, 0.1, 0.1);
-            demoActionFrameCount = 0;
-
+            signal.Text = "Take start pose";
+            coach.speak("Enter starting position");
+            Pose enGardePose = Pose.getPose(recordDirectory + "\\ready.txt").setErrors(0.08, 100, 0.08, 0.08, 0.08);
+            currentAction = FencingAction.getAction(recordDirectory + "\\advance2.txt", enGardePose, enGardePose).setErrors(0.08, 0.2, 0.08, 0.1, 0.1);
+            actionFrameCount = 0;
             watchingAction = true;
         }
     }

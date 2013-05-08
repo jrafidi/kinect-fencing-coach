@@ -75,7 +75,7 @@ namespace FinalProject_KinectCoach
             Dictionary<JointType, double> errorMap = this.getErrorMap(skeleton);
 
             int incorrect = 0;
-
+            
             // Torso
             incorrect += errorMap[JointType.Head] > torsoError ? 1 : 0;
             incorrect += errorMap[JointType.ShoulderCenter] > torsoError ? 1 : 0;
@@ -92,19 +92,19 @@ namespace FinalProject_KinectCoach
             incorrect += errorMap[JointType.ShoulderRight] > rightArmError ? 1 : 0;
             incorrect += errorMap[JointType.ElbowRight] > rightArmError ? 1 : 0;
             incorrect += errorMap[JointType.WristRight] > rightArmError ? 1 : 0;
-            incorrect += errorMap[JointType.HandRight] > rightArmError ? 1 : 0;
+            incorrect += errorMap[JointType.HandRight] > rightArmError+0.02 ? 1 : 0;
 
             // Left Leg
             incorrect += errorMap[JointType.HipLeft] > leftLegError ? 1 : 0;
             incorrect += errorMap[JointType.KneeLeft] > leftLegError ? 1 : 0;
             incorrect += errorMap[JointType.AnkleLeft] > leftLegError ? 1 : 0;
-            incorrect += errorMap[JointType.FootLeft] > leftLegError ? 1 : 0;
+            incorrect += errorMap[JointType.FootLeft] > leftLegError && skeleton.Joints[JointType.FootLeft].TrackingState == JointTrackingState.Tracked ? 1 : 0;
 
             // Right Leg
             incorrect += errorMap[JointType.HipRight] > rightLegError ? 1 : 0;
             incorrect += errorMap[JointType.KneeRight] > rightLegError ? 1 : 0;
             incorrect += errorMap[JointType.AnkleRight] > rightLegError ? 1 : 0;
-            incorrect += errorMap[JointType.FootRight] > rightLegError ? 1 : 0;
+            incorrect += errorMap[JointType.FootRight] > rightLegError && skeleton.Joints[JointType.FootRight].TrackingState == JointTrackingState.Tracked ? 1 : 0;
 
             return incorrect <= allowedIncorrect;
         }
