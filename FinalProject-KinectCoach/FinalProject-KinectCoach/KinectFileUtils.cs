@@ -20,22 +20,29 @@ namespace FinalProject_KinectCoach
     class KinectFileUtils
     {
 
-        public static List<Skeleton> ReadRecordingFile(string filename)
+        public static List<Skeleton> ReadSkeletonFromRecordingFile(string filename)
         {
             List<Skeleton> frames = new List<Skeleton>();
-            string file = File.ReadAllText(filename);
 
             string line;
             Skeleton skel = new Skeleton();
-
+            int frameCount = 0;
             StreamReader reader = new StreamReader(filename);
-            line = reader.ReadLine();
             while ((line = reader.ReadLine()) != null)
             {
+                if (line.Contains("ERRORS"))
+                {
+                    continue;
+                }
+
                 if (line.Contains("FRAME"))
                 {
-                    frames.Add(skel);
-                    skel = new Skeleton();
+                    if (frameCount > 0)
+                    {
+                        frames.Add(skel);
+                        skel = new Skeleton();
+                    }
+                    frameCount++;
                     continue;
                 }
                 string[] jointParts = line.Split(',');
@@ -52,10 +59,67 @@ namespace FinalProject_KinectCoach
                 j.Position = p;
                 skel.Joints[j.JointType] = j;
             }
-
+            reader.Close();
             frames.Add(skel);
 
             return frames;
+        }
+
+        public static List<double> ReadErrorsFromRecordingFile(string filename, int errorSet)
+        {
+            List<double> errors = new List<Double>();
+            StreamReader reader = new StreamReader(filename);
+            string line;
+            int count = 0;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (line.Contains("ERRORS"))
+                {
+                    count++;
+                }
+
+                if (count == errorSet) {
+                    line = line.Split(':')[1];
+                    string[] error = line.Split(',');
+                    foreach (string s in error)
+                    {
+                        errors.Add(double.Parse(s.Trim()));
+                    }
+                    reader.Close();
+                    return errors;
+                }
+            }
+            reader.Close();
+            return errors;
+        }
+
+        public static Dictionary<string, string> getHeaders(string filepath)
+        {
+            Dictionary<string, string> headers = new Dictionary<string, string>();
+            StreamReader reader = new StreamReader(filepath);
+            string line;
+            bool inHeader = false;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (line.Contains("STARTHEADER"))
+                {
+                    inHeader = true;
+                    continue;
+                }
+                else if (line.Contains("ENDHEADER"))
+                {
+                    inHeader = false;
+                    continue;
+                }
+
+                if (inHeader)
+                {
+                    string[] parts = line.Split(':');
+                    headers.Add(parts[0], parts[1]);
+                }
+            }
+            reader.Close();
+            return headers;
         }
 
         /// <summary>
@@ -198,6 +262,10 @@ namespace FinalProject_KinectCoach
 
             for (int i = 0; i< diff; i++) 
             {
+                if (dists.Count == 0)
+                {
+                    break;
+                }
                 double max = dists.Min();
                 int index = dists.IndexOf(max);
 

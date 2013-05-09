@@ -18,6 +18,7 @@ namespace FinalProject_KinectCoach
 {
     class Pose
     {
+        public static string POSE_DIRECTORY = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
         static readonly double defaultError = 0.1;
 
         string filepath;
@@ -29,12 +30,17 @@ namespace FinalProject_KinectCoach
         public double leftLegError = defaultError;
         public double rightLegError = defaultError;
 
-        public static Pose getPose(string filepath)
+        public Pose (string filepath)
         {
-            Pose p = new Pose();
-            p.filepath = filepath;
-            p.frame = KinectFileUtils.ReadRecordingFile(filepath).ElementAt(0);
-            return p;
+            this.filepath = filepath;
+            this.frame = KinectFileUtils.ReadSkeletonFromRecordingFile(filepath).ElementAt(0);
+
+            List<double> errors = KinectFileUtils.ReadErrorsFromRecordingFile(filepath, 1);
+            this.torsoError = errors[0];
+            this.leftArmError = errors[1];
+            this.rightArmError = errors[2]; 
+            this.leftLegError = errors[3]; 
+            this.rightLegError = errors[4]; 
         }
 
         public Pose setErrors(double te, double lae, double rae, double lle, double rle)

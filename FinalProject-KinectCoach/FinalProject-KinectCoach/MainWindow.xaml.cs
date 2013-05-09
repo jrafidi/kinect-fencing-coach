@@ -15,6 +15,7 @@ using System.Threading;
 using System.Windows.Media.Imaging;
 using System.Linq;
 using AForge.Math;
+using System.Windows.Controls;
 
 namespace FinalProject_KinectCoach
 {
@@ -269,16 +270,7 @@ namespace FinalProject_KinectCoach
                         previousSpeech = e;
                         break;
                     case "action":
-                        switch (e.Result.Semantics["action"].Value.ToString())
-                        {
-                            case "advance":
-                                watchAdvance();
-                                break;
-                            case "retreat":
-                                break;
-                            case "lunge":
-                                break;
-                        }
+                        watchAction(e.Result.Semantics["action"].Value.ToString());
                         previousSpeech = e;
                         break;
                 }
@@ -747,29 +739,39 @@ namespace FinalProject_KinectCoach
             recording = true;
             recordFileName = string.Format("recording-{0:yyyy-MM-dd_hh-mm-ss-tt}.txt", DateTime.Now);
             signal.Text = "Recording";
-            trackedBonePen = new Pen(Brushes.Green, 6);
+            signal.Foreground = Brushes.DeepSkyBlue;
+            coach.speak("Begin");
         }
 
         private void stopRecording()
         {
             recording = false;
+            signal.Foreground = Brushes.Black;
             signal.Text = "Ready";
-            trackedBonePen = new Pen(Brushes.DarkBlue, 6);
         }
 
         ////////////////////
         // MENU CODE
+        //
+        // Various menu event handlers
         ////////////////////
 
-        /// <summary>
-        /// Event handler when user selects "Training Data" from view menu
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void viewTrainingData(object sender, RoutedEventArgs e)
         {
             TrainingData t = new TrainingData(sensor);
             t.Show();
+        }
+
+        private void PoseClick(object sender, RoutedEventArgs e)
+        {
+            MenuItem mnu = e.Source as MenuItem;
+            checkPose(mnu.Name.ToLower());
+        }
+
+        private void ActionClick(object sender, RoutedEventArgs e)
+        {
+            MenuItem mnu = e.Source as MenuItem;
+            watchAction(mnu.Name.ToLower());
         }
 
         ////////////////////
@@ -796,19 +798,7 @@ namespace FinalProject_KinectCoach
         private void checkPose(string pose)
         {
             signal.Text = "Checking " + pose;
-            currentPose = Pose.getPose(recordDirectory + "\\" + pose + ".txt");
-            switch (pose)
-            {
-                case "ready":
-                    currentPose.setErrors(0.08, 100, 0.08, 0.08, 0.08);
-                    break;
-                case "extension":
-                    currentPose.setErrors(0.08, 0.3, 0.1, 0.12, 0.1);
-                    break;
-                case "lunge":
-                    currentPose.setErrors(0.1, 0.3, 0.12, 0.13, 0.13);
-                    break;
-            }
+            currentPose = new Pose(Pose.POSE_DIRECTORY + "\\" + pose + ".pose");
             cpm = CompareMode.POSE;
         }
 
@@ -825,6 +815,8 @@ namespace FinalProject_KinectCoach
             actionStarted = false;
             actionFrames = new List<Skeleton>();
             actionFrameCount = 0;
+
+            stopRecording();
         }
 
         ////////////////////
@@ -863,7 +855,7 @@ namespace FinalProject_KinectCoach
                 signal.Text = "Evaluating...";
                 actionStarted = false;
                 watchingAction = false;
-                coach.speak("End");
+                coach.speak("Halt");
                 evaluateAction();
             }
 
@@ -884,13 +876,12 @@ namespace FinalProject_KinectCoach
             dm = DemoMode.NONE;
         }
 
-        private void watchAdvance()
+        private void watchAction(string action)
         {
             clearAll();
-            signal.Text = "Take start pose";
+            signal.Text = "Take start pose for " + action;
             coach.speak("Enter starting position");
-            Pose enGardePose = Pose.getPose(recordDirectory + "\\ready.txt").setErrors(0.08, 100, 0.08, 0.08, 0.08);
-            currentAction = FencingAction.getAction(recordDirectory + "\\advance2.txt", enGardePose, enGardePose).setErrors(0.08, 0.2, 0.08, 0.1, 0.1);
+            currentAction = new FencingAction(FencingAction.ACTION_DIRECTORY + "\\" + action + ".action");
             actionFrameCount = 0;
             watchingAction = true;
         }

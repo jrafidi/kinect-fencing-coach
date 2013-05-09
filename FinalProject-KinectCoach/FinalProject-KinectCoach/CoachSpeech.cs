@@ -58,6 +58,9 @@ namespace FinalProject_KinectCoach
                 case 1:
                     speak("Good.");
                     break;
+                case 2:
+                    speak("Well done.");
+                    break;
                 default:
                     speak("Correct.");
                     break;

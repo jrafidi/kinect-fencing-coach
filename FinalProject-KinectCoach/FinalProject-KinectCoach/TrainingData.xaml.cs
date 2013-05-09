@@ -120,6 +120,9 @@ namespace FinalProject_KinectCoach
 
             // Display the drawing using our image control
             Image.Source = this.imageSource;
+
+            prevFrame.IsEnabled = false;
+            nextFrame.IsEnabled = false;
         }
 
         /// <summary>
@@ -236,12 +239,10 @@ namespace FinalProject_KinectCoach
         private void openFileDialog(object sender, RoutedEventArgs e)
         {
             // Create OpenFileDialog
-            OpenFileDialog dlg = new OpenFileDialog();          
- 
-            // Set filter for file extension and default file extension
-            dlg.DefaultExt = ".txt";
-            dlg.Filter = "Text documents (.txt)|*.txt";
- 
+            OpenFileDialog dlg = new OpenFileDialog();
+
+            dlg.Filter = "Recording files|*.txt;*.rec;*.pose;";
+
             // Display OpenFileDialog by calling ShowDialog method
             Nullable<bool> result = dlg.ShowDialog();
  
@@ -261,7 +262,15 @@ namespace FinalProject_KinectCoach
         /// <param name="filename"></param>
         private void processFile(string filename)
         {
-            frames = KinectFileUtils.ReadRecordingFile(filename);
+            frames = KinectFileUtils.ReadSkeletonFromRecordingFile(filename);
+            if (frames.Count == 0)
+            {
+                FrameCount.Text = "No frames found!";
+                return;
+            }
+
+            prevFrame.IsEnabled = true;
+            nextFrame.IsEnabled = true;
 
             FrameCount.Text = "1/" + frames.Count + " frames";
             currentFrame = 0;

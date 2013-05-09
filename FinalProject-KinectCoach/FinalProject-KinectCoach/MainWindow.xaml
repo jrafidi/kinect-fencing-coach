@@ -28,7 +28,7 @@
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" Margin="-10 0 -15 0" Grid.RowSpan="2">
             <Menu Width="Auto" Height="20" Background="#FFA9D1F4" DockPanel.Dock="Top"  VerticalAlignment="Top">
-                <MenuItem Header="_View" Margin="10 0 0 0">
+                <MenuItem Header="_View Data" Margin="10 0 0 0">
                     <MenuItem Header="Training Data" Click="viewTrainingData"/>
                     <MenuItem Header="Testing Data"/>
 <!--                <Separator />
@@ -41,6 +41,20 @@
                             </DockPanel>
                         </MenuItem.Header>
                     </MenuItem>-->
+                </MenuItem>
+                <MenuItem Header="_Poses" Margin="10 0 0 0" Click="PoseClick">
+                    <MenuItem Header="Ready" Name="Ready"/>
+                    <MenuItem Header="Extension" Name="Extension"/>
+                    <MenuItem Header="Lunge" Name="Lunge"/>
+                </MenuItem>
+                <MenuItem Header="_Actions" Margin="10 0 0 0" Click="ActionClick">
+                    <MenuItem Header="Advance"/>
+                    <MenuItem Header="Retreat"/>
+                    <MenuItem Header="Extend"/>
+                    <MenuItem Header="Lunge"/>
+                </MenuItem>
+                <MenuItem Header="_Help" Margin="10 0 0 0">
+                    <MenuItem Header="Speech Commands"/>
                 </MenuItem>
             </Menu>
         </DockPanel>

@@ -85,6 +85,7 @@
     <one-of>
       <item>advance</item>
       <item>retreat</item>
+      <item>extend</item>
       <item>lunge</item>
     </one-of>
   </rule>

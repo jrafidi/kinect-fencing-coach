@@ -18,7 +18,9 @@ namespace FinalProject_KinectCoach
 {
     class FencingAction
     {
+        public static string ACTION_DIRECTORY = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
         string filepath;
+        public List<List<Skeleton>> trainingDataFrames = new List<List<Skeleton>>();
         public List<Skeleton> frames;
         public Pose startPose;
         public Pose endPose;
@@ -31,14 +33,22 @@ namespace FinalProject_KinectCoach
         public double leftLegError = defaultError;
         public double rightLegError = defaultError;
 
-        public static FencingAction getAction(string filepath, Pose startPose, Pose endPose)
+        public FencingAction(string headerFilePath)
         {
-            FencingAction fa = new FencingAction();
-            fa.filepath = filepath;
-            fa.startPose = startPose;
-            fa.endPose = endPose;
-            fa.frames = KinectFileUtils.ReadRecordingFile(filepath);
-            return fa;
+            filepath = headerFilePath;
+            Dictionary<string, string> headers = KinectFileUtils.getHeaders(headerFilePath);
+
+            startPose = new Pose(Pose.POSE_DIRECTORY + "\\" + headers["STARTPOSE"] + ".pose");
+            endPose = new Pose(Pose.POSE_DIRECTORY + "\\" + headers["ENDPOSE"] + ".pose");
+
+            string[] td = headers["TRAININGDATA"].Split(',');
+            foreach (string s in td)
+            {
+                trainingDataFrames.Add(KinectFileUtils.ReadSkeletonFromRecordingFile(ACTION_DIRECTORY + "\\" + s));
+            }
+
+            // TEMP
+            frames = trainingDataFrames[0];
         }
 
         public FencingAction setErrors(double te, double lae, double rae, double lle, double rle)
