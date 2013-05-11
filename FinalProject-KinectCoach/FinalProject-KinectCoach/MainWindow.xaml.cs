@@ -55,6 +55,8 @@ namespace FinalProject_KinectCoach
             this.KeyDown += new KeyEventHandler(OnButtonKeyDown);
         }
 
+        private bool paused = false;
+
         /// <summary>
         /// Handle keypress events on windows
         /// </summary>
@@ -64,14 +66,15 @@ namespace FinalProject_KinectCoach
         {
             if (e.Key == Key.Space)
             {
-                if (recording)
+                if (paused)
                 {
-                    stopRecording();
+                    sensor.SkeletonFrameReady += SensorSkeletonFrameReady;
                 }
                 else
                 {
-                    startRecording();
+                    sensor.SkeletonFrameReady -= SensorSkeletonFrameReady;
                 }
+                paused = !paused;
             }
         }
 
@@ -232,7 +235,7 @@ namespace FinalProject_KinectCoach
                     case "simple":
                         switch (e.Result.Semantics["command"].Value.ToString())
                         {
-                            case "recording":                              
+                            case "recording":
                                 startRecording();
                                 break;
                             case "stoprecording":
@@ -262,6 +265,20 @@ namespace FinalProject_KinectCoach
                                 break;
                             case "clear":
                                 clearAll();
+                                break;
+                            case "callibrate":
+                                cpm = CompareMode.CALLIBRATE;
+                                break;
+                            case "uncallibrate":
+                                rotTransform = Matrix3x3.Identity;
+                                break;
+                            case "showdemoaction":
+                                actionFrameCount = 0;
+                                cpm = cpm == CompareMode.ACTION ? CompareMode.SIMUL_ACTION : cpm;
+                                break;
+                            case "hidedemoaction":
+                                actionFrameCount = 0;
+                                cpm = cpm == CompareMode.SIMUL_ACTION ? CompareMode.ACTION : cpm;
                                 break;
                         }
                         break;
@@ -432,7 +449,7 @@ namespace FinalProject_KinectCoach
                         {
                             if (skel.TrackingState == SkeletonTrackingState.Tracked)
                             {
-                                this.DrawBonesAndJointWithComparison(skel, currentPose, dc);
+                                this.DrawBonesAndJointsWithComparison(skel, currentPose, dc);
                                 if (currentPose.matchesSkeleton(skel, 1))
                                 {
                                     coach.sayCorrect();
@@ -440,6 +457,26 @@ namespace FinalProject_KinectCoach
                                 }
                             }
                         }
+                        break;
+                    case CompareMode.CALLIBRATE:
+                        foreach (Skeleton skel in skeletons)
+                        {
+                            if (skel.TrackingState == SkeletonTrackingState.Tracked)
+                            {
+                                currentPose = new Pose("ready");
+                                rotTransform = KinectFrameUtils.getRotationMatrix(skel, currentPose.frame);
+                                coach.speak("Rotational differences recorded");
+                                cpm = CompareMode.NONE;
+                            }
+                        }
+                        break;
+                    case CompareMode.ACTION:
+                        if (actionFrameCount >= currentAction.frames.Count)
+                        {
+                            actionFrameCount = 0;
+                        }
+                        this.DrawBonesAndJointsWithComparison(actionFrames.ElementAt(actionFrameCount), currentAction.getPoseOfFrame(actionFrameCount), dc);
+                        actionFrameCount++;
                         break;
                     case CompareMode.SIMUL_ACTION:
                         if (actionFrameCount >= currentAction.frames.Count)
@@ -449,7 +486,7 @@ namespace FinalProject_KinectCoach
                         trackedBonePen = new Pen(Brushes.DarkGreen, 6);
                         this.DrawBonesAndJoints(currentAction.frames.ElementAt(actionFrameCount), dc);
                         trackedBonePen = new Pen(Brushes.DarkBlue, 6);
-                        this.DrawBonesAndJoints(actionFrames.ElementAt(actionFrameCount), dc);
+                        this.DrawBonesAndJointsWithComparison(actionFrames.ElementAt(actionFrameCount), currentAction.getPoseOfFrame(actionFrameCount), dc);
                         actionFrameCount++;
                         break;
                     case CompareMode.NONE:
@@ -465,7 +502,7 @@ namespace FinalProject_KinectCoach
                                         if (!actionStarted)
                                         {
                                             checkActionStart(skel);
-                                            this.DrawBonesAndJointWithComparison(skel, currentAction.startPose, dc);
+                                            this.DrawBonesAndJointsWithComparison(skel, currentAction.startPose, dc);
                                         }
                                         else
                                         {
@@ -609,10 +646,10 @@ namespace FinalProject_KinectCoach
             Joint rWrist = skel.Joints[JointType.WristRight];
 
             SkeletonPoint diff = new SkeletonPoint();
-            diff.X = 1.2f*rHand.Position.X - rWrist.Position.X;
-            diff.Y = 1.2f*rHand.Position.Y - rWrist.Position.Y;
-            diff.Z = 1.2f*rHand.Position.Z - rWrist.Position.Z;
-            
+            diff.X = 1.2f * rHand.Position.X - rWrist.Position.X;
+            diff.Y = 1.2f * rHand.Position.Y - rWrist.Position.Y;
+            diff.Z = 1.2f * rHand.Position.Z - rWrist.Position.Z;
+
             dc.DrawLine(new Pen(Brushes.DarkGray, 5), this.SkeletonPointToScreen(rHand.Position), this.SkeletonPointToScreen(diff));
         }
 
@@ -624,7 +661,7 @@ namespace FinalProject_KinectCoach
         /// Pen for bones that are in the correct position
         /// </summary>
         private Pen correctBonePen = new Pen(Brushes.Green, 6);
-        
+
         /// <summary>
         /// Pen for bones who have at least one joint in the incorrect position
         /// </summary>
@@ -636,7 +673,7 @@ namespace FinalProject_KinectCoach
         /// <param name="skeleton"></param>
         /// <param name="compare"></param>
         /// <param name="drawingContext"></param>
-        private void DrawBonesAndJointWithComparison(Skeleton skeleton, Pose currentP, DrawingContext drawingContext)
+        private void DrawBonesAndJointsWithComparison(Skeleton skeleton, Pose currentP, DrawingContext drawingContext)
         {
             Dictionary<JointType, double> errorMap = currentP.getErrorMap(skeleton);
 
@@ -675,10 +712,10 @@ namespace FinalProject_KinectCoach
             // Render Joints
             foreach (Joint joint in skeleton.Joints)
             {
-                drawingContext.DrawEllipse(this.trackedJointBrush, null, this.SkeletonPointToScreen(joint.Position), JointThickness, JointThickness);   
+                drawingContext.DrawEllipse(this.trackedJointBrush, null, this.SkeletonPointToScreen(joint.Position), JointThickness, JointThickness);
             }
 
-            
+
         }
 
         /// <summary>
@@ -738,16 +775,13 @@ namespace FinalProject_KinectCoach
         {
             recording = true;
             recordFileName = string.Format("recording-{0:yyyy-MM-dd_hh-mm-ss-tt}.txt", DateTime.Now);
-            signal.Text = "Recording";
             signal.Foreground = Brushes.DeepSkyBlue;
-            coach.speak("Begin");
         }
 
         private void stopRecording()
         {
             recording = false;
             signal.Foreground = Brushes.Black;
-            signal.Text = "Ready";
         }
 
         ////////////////////
@@ -765,13 +799,13 @@ namespace FinalProject_KinectCoach
         private void PoseClick(object sender, RoutedEventArgs e)
         {
             MenuItem mnu = e.Source as MenuItem;
-            checkPose(mnu.Name.ToLower());
+            checkPose(mnu.Header.ToString().ToLower());
         }
 
         private void ActionClick(object sender, RoutedEventArgs e)
         {
             MenuItem mnu = e.Source as MenuItem;
-            watchAction(mnu.Name.ToLower());
+            watchAction(mnu.Header.ToString().ToLower());
         }
 
         ////////////////////
@@ -780,7 +814,7 @@ namespace FinalProject_KinectCoach
 
         private enum CompareMode
         {
-            NONE, POSE, ACTION, SIMUL_ACTION
+            NONE, POSE, ACTION, SIMUL_ACTION, CALLIBRATE
         }
 
         private enum DemoMode
@@ -791,15 +825,18 @@ namespace FinalProject_KinectCoach
         private CompareMode cpm = CompareMode.NONE;
         private DemoMode dm = DemoMode.NONE;
 
-        // Normally, one would cache different poses so as to only load each type once
-        // However, these are pretty small files and there isn't any trouble loading them in
         private Pose currentPose = null;
+
+        private Matrix3x3 rotTransform = Matrix3x3.Identity;
 
         private void checkPose(string pose)
         {
+            coach.speak("Enter " + pose + " position");
             signal.Text = "Checking " + pose;
-            currentPose = new Pose(Pose.POSE_DIRECTORY + "\\" + pose + ".pose");
+            currentPose = new Pose(pose);
+            currentPose.applyTransform(rotTransform);
             cpm = CompareMode.POSE;
+            correctBonePen = new Pen(Brushes.Green, 6);
         }
 
         private void clearAll()
@@ -831,6 +868,7 @@ namespace FinalProject_KinectCoach
         private int actionFrameCount = 0;
 
         private FencingAction currentAction = null;
+        private Skeleton lastFrame;
 
         private void checkActionStart(Skeleton skel)
         {
@@ -846,25 +884,29 @@ namespace FinalProject_KinectCoach
         {
             if (actionFrames.Count < 30)
             {
+                lastFrame = skel;
                 return;
             }
-
-            double distTraveled = KinectFileUtils.totalDistTraveled(actionFrames);
-            if (currentAction.endPose.matchesSkeleton(skel, 1) && distTraveled > 10)
-            {
-                signal.Text = "Evaluating...";
-                actionStarted = false;
-                watchingAction = false;
-                coach.speak("Halt");
-                evaluateAction();
-            }
-
-            if (actionFrames.Count > 300)
+            else if (actionFrames.Count > 300)
             {
                 signal.Text = "Action too long";
                 actionStarted = false;
                 coach.speak("Action timeout");
                 actionFrames = new List<Skeleton>();
+                return;
+            }
+
+            double midDist = KinectFrameUtils.getDistBetweenFrames(lastFrame, skel);
+            lastFrame = skel;
+            double distTraveled = KinectFrameUtils.totalDistTraveled(actionFrames);
+            if (currentAction.endPose.matchesSkeleton(skel, 1) && distTraveled > currentAction.dist / 2 && midDist < 0.1)
+            {
+                signal.Text = "Comparison above";
+                actionStarted = false;
+                watchingAction = false;
+                coach.speak("Halt");
+                evaluateAction();
+                return;
             }
         }
 
@@ -874,16 +916,19 @@ namespace FinalProject_KinectCoach
             shiftedDemo = currentAction.getShiftedFrames(actionFrames.ElementAt(0).Joints[JointType.HipCenter].Position);
             cpm = CompareMode.SIMUL_ACTION;
             dm = DemoMode.NONE;
+            correctBonePen = new Pen(Brushes.Blue, 6);
         }
 
         private void watchAction(string action)
         {
             clearAll();
             signal.Text = "Take start pose for " + action;
-            coach.speak("Enter starting position");
             currentAction = new FencingAction(FencingAction.ACTION_DIRECTORY + "\\" + action + ".action");
+            currentAction.applyRotation(rotTransform);
+            coach.speak("Enter starting position for " + action);
             actionFrameCount = 0;
             watchingAction = true;
+            correctBonePen = new Pen(Brushes.DarkGreen, 6);
         }
     }
 }

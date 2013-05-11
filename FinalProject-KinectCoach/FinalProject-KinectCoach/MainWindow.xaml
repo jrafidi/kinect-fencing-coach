@@ -1,6 +1,7 @@
 ﻿<Window x:Class="FinalProject_KinectCoach.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Icon="Images/Kinect.ico"
         Title="Kinect Fencing Coach" Height="800" Width="840"
         Loaded="WindowLoaded" Closing="WindowClosing">
     <Window.Resources>
@@ -43,15 +44,15 @@
                     </MenuItem>-->
                 </MenuItem>
                 <MenuItem Header="_Poses" Margin="10 0 0 0" Click="PoseClick">
-                    <MenuItem Header="Ready" Name="Ready"/>
-                    <MenuItem Header="Extension" Name="Extension"/>
-                    <MenuItem Header="Lunge" Name="Lunge"/>
+                    <MenuItem Header="Ready"/>
+                    <MenuItem Header="Extension" />
+                    <MenuItem Header="Lunge" />
                 </MenuItem>
                 <MenuItem Header="_Actions" Margin="10 0 0 0" Click="ActionClick">
-                    <MenuItem Header="Advance"/>
-                    <MenuItem Header="Retreat"/>
-                    <MenuItem Header="Extend"/>
-                    <MenuItem Header="Lunge"/>
+                    <MenuItem Header="Advance" />
+                    <MenuItem Header="Retreat" />
+                    <MenuItem Header="Extend" />
+                    <MenuItem Header="Lunge" />
                 </MenuItem>
                 <MenuItem Header="_Help" Margin="10 0 0 0">
                     <MenuItem Header="Speech Commands"/>

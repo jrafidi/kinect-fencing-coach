@@ -13,6 +13,7 @@ using Microsoft.Speech.Recognition;
 using System.Threading;
 using System.Windows.Media.Imaging;
 using System.Linq;
+using AForge.Math;
 
 namespace FinalProject_KinectCoach
 {
@@ -24,8 +25,9 @@ namespace FinalProject_KinectCoach
         public List<Skeleton> frames;
         public Pose startPose;
         public Pose endPose;
+        public double dist;
 
-        static readonly double defaultError = 0.1;
+        static readonly double defaultError = 0.2;
 
         public double torsoError = defaultError;
         public double leftArmError = defaultError;
@@ -36,10 +38,11 @@ namespace FinalProject_KinectCoach
         public FencingAction(string headerFilePath)
         {
             filepath = headerFilePath;
-            Dictionary<string, string> headers = KinectFileUtils.getHeaders(headerFilePath);
+            Dictionary<string, string> headers = KinectFileUtils.getRecordingFileHeaders(headerFilePath);
 
-            startPose = new Pose(Pose.POSE_DIRECTORY + "\\" + headers["STARTPOSE"] + ".pose");
-            endPose = new Pose(Pose.POSE_DIRECTORY + "\\" + headers["ENDPOSE"] + ".pose");
+            startPose = new Pose(headers["STARTPOSE"]);
+            endPose = new Pose(headers["ENDPOSE"]);
+            endPose.scaleErrors(float.Parse(headers["ENDSCALAR"]));
 
             string[] td = headers["TRAININGDATA"].Split(',');
             foreach (string s in td)
@@ -49,6 +52,8 @@ namespace FinalProject_KinectCoach
 
             // TEMP
             frames = trainingDataFrames[0];
+
+            dist = KinectFrameUtils.totalDistTraveled(frames);
         }
 
         public FencingAction setErrors(double te, double lae, double rae, double lle, double rle)
@@ -88,19 +93,19 @@ namespace FinalProject_KinectCoach
 
         public List<Skeleton> correctedFrames(List<Skeleton> rawFrames)
         {
-            rawFrames = KinectFileUtils.alignFrames(rawFrames, frames.Count);
+            rawFrames = KinectFrameUtils.alignFrames(rawFrames, frames.Count);
 
             int frameStart = -1;
             int rawStart = -1;
 
             for (int i = 0; i < frames.Count; i++)
             {
-                if (KinectFileUtils.totalDistTraveled(frames.GetRange(0, i)) > 2 && frameStart < 0)
+                if (KinectFrameUtils.totalDistTraveled(frames.GetRange(0, i)) > (dist / 5) && frameStart < 0)
                 {
                     frameStart = i;
                 }
 
-                if (KinectFileUtils.totalDistTraveled(rawFrames.GetRange(0, i)) > 2 && rawStart < 0)
+                if (KinectFrameUtils.totalDistTraveled(rawFrames.GetRange(0, i)) > (dist / 5) && rawStart < 0)
                 {
                     rawStart = i;
                 }
@@ -123,6 +128,27 @@ namespace FinalProject_KinectCoach
                 }
             }
             return rawFrames;
+        }
+
+        public void applyRotation(Matrix3x3 trans)
+        {
+            foreach (List<Skeleton> tFrames in trainingDataFrames)
+            {
+                for (int i = 0; i < tFrames.Count; i++)
+                {
+                    frames[i] = KinectFrameUtils.transRotateTrans(frames[i], trans);
+                }
+            }
+
+            frames = trainingDataFrames[0];
+
+            startPose.applyTransform(trans);
+            endPose.applyTransform(trans);
+        }
+
+        public Pose getPoseOfFrame(int index)
+        {
+            return new Pose(frames[index]);
         }
     }
 }

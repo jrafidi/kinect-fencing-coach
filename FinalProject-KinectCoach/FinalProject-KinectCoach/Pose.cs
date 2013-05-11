@@ -13,6 +13,7 @@ using Microsoft.Speech.Recognition;
 using System.Threading;
 using System.Windows.Media.Imaging;
 using System.Linq;
+using AForge.Math;
 
 namespace FinalProject_KinectCoach
 {
@@ -22,6 +23,7 @@ namespace FinalProject_KinectCoach
         static readonly double defaultError = 0.1;
 
         string filepath;
+        public string name;
         public Skeleton frame;
 
         public double torsoError = defaultError;
@@ -30,9 +32,10 @@ namespace FinalProject_KinectCoach
         public double leftLegError = defaultError;
         public double rightLegError = defaultError;
 
-        public Pose (string filepath)
+        public Pose (string name)
         {
-            this.filepath = filepath;
+            this.name = name;
+            this.filepath = POSE_DIRECTORY + "\\" + name + ".pose";
             this.frame = KinectFileUtils.ReadSkeletonFromRecordingFile(filepath).ElementAt(0);
 
             List<double> errors = KinectFileUtils.ReadErrorsFromRecordingFile(filepath, 1);
@@ -41,6 +44,11 @@ namespace FinalProject_KinectCoach
             this.rightArmError = errors[2]; 
             this.leftLegError = errors[3]; 
             this.rightLegError = errors[4]; 
+        }
+
+        public Pose(Skeleton frame)
+        {
+            this.frame = frame;
         }
 
         public Pose setErrors(double te, double lae, double rae, double lle, double rle)
@@ -52,6 +60,15 @@ namespace FinalProject_KinectCoach
             this.rightLegError = rle;
 
             return this;
+        }
+
+        public void scaleErrors(float scalar)
+        {
+            torsoError = torsoError * scalar;
+            leftArmError = leftArmError * scalar;
+            rightArmError = rightArmError * scalar;
+            leftLegError = leftLegError * scalar;
+            rightLegError = rightLegError * scalar;
         }
 
         public Dictionary<JointType, double> getErrorMap(Skeleton skeleton)
@@ -103,16 +120,21 @@ namespace FinalProject_KinectCoach
             // Left Leg
             incorrect += errorMap[JointType.HipLeft] > leftLegError ? 1 : 0;
             incorrect += errorMap[JointType.KneeLeft] > leftLegError ? 1 : 0;
-            incorrect += errorMap[JointType.AnkleLeft] > leftLegError ? 1 : 0;
-            incorrect += errorMap[JointType.FootLeft] > leftLegError && skeleton.Joints[JointType.FootLeft].TrackingState == JointTrackingState.Tracked ? 1 : 0;
+            incorrect += errorMap[JointType.AnkleLeft] > leftLegError*1.5 ? 1 : 0;
+            incorrect += errorMap[JointType.FootLeft] > leftLegError*1.5 && skeleton.Joints[JointType.FootLeft].TrackingState == JointTrackingState.Tracked ? 1 : 0;
 
             // Right Leg
             incorrect += errorMap[JointType.HipRight] > rightLegError ? 1 : 0;
             incorrect += errorMap[JointType.KneeRight] > rightLegError ? 1 : 0;
-            incorrect += errorMap[JointType.AnkleRight] > rightLegError ? 1 : 0;
-            incorrect += errorMap[JointType.FootRight] > rightLegError && skeleton.Joints[JointType.FootRight].TrackingState == JointTrackingState.Tracked ? 1 : 0;
+            incorrect += errorMap[JointType.AnkleRight] > rightLegError*1.5 ? 1 : 0;
+            incorrect += errorMap[JointType.FootRight] > rightLegError*1.5 && skeleton.Joints[JointType.FootRight].TrackingState == JointTrackingState.Tracked ? 1 : 0;
 
             return incorrect <= allowedIncorrect;
+        }
+
+        public void applyTransform(Matrix3x3 transform)
+        {
+            frame = KinectFrameUtils.transRotateTrans(frame, transform);
         }
     }
 }
