@@ -20,7 +20,7 @@ namespace FinalProject_KinectCoach
     /// <summary>
     /// Interaction logic for TrainingData.xaml
     /// </summary>
-    public partial class TrainingData : Window
+    public partial class RecordingData : Window
     {
         /// <summary>
         /// Width of output drawing
@@ -94,12 +94,12 @@ namespace FinalProject_KinectCoach
 
         private int currentFrame = 0;
 
-        public TrainingData()
+        public RecordingData()
         {
             InitializeComponent();
         }
 
-        public TrainingData(KinectSensor sensor)
+        public RecordingData(KinectSensor sensor)
         {
             InitializeComponent();
             this.sensor = sensor;

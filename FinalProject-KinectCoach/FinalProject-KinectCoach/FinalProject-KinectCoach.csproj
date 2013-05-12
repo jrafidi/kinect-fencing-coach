@@ -72,8 +72,11 @@
     <Compile Include="KinectFileUtils.cs" />
     <Compile Include="KinectFrameUtils.cs" />
     <Compile Include="Pose.cs" />
-    <Compile Include="TrainingData.xaml.cs">
-      <DependentUpon>TrainingData.xaml</DependentUpon>
+    <Compile Include="SpeechCommands.xaml.cs">
+      <DependentUpon>SpeechCommands.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RecordingData.xaml.cs">
+      <DependentUpon>RecordingData.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -87,7 +90,11 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="TrainingData.xaml">
+    <Page Include="SpeechCommands.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="RecordingData.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

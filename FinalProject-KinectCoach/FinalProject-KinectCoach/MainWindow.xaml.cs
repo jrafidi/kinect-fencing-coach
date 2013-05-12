@@ -253,10 +253,10 @@ namespace FinalProject_KinectCoach
                         switch (e.Result.Semantics["command"].Value.ToString())
                         {
                             case "recording":
-                                startRecording("recording");
+                                startRecordingSkeleton("recording");
                                 break;
                             case "stoprecording":
-                                stopRecording();
+                                stopRecordingSkeleton();
                                 break;
                             case "show":
                                 if (currentPose != null)
@@ -770,7 +770,7 @@ namespace FinalProject_KinectCoach
         }
 
         ////////////////////
-        // RECORDING CODE
+        // SKELETON RECORDING CODE
         ////////////////////
 
         private string recordDirectory = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
@@ -793,14 +793,14 @@ namespace FinalProject_KinectCoach
             coordinatesStream.Close();
         }
 
-        private void startRecording(string prefix)
+        private void startRecordingSkeleton(string prefix)
         {
             recording = true;
             recordFileName = string.Format(prefix + "-{0:yyyy-MM-dd_hh-mm-ss-tt}.txt", DateTime.Now);
             signal.Foreground = Brushes.DeepSkyBlue;
         }
 
-        private void stopRecording()
+        private void stopRecordingSkeleton()
         {
             recording = false;
             signal.Foreground = Brushes.Black;
@@ -812,7 +812,7 @@ namespace FinalProject_KinectCoach
 
         private void viewTrainingData(object sender, RoutedEventArgs e)
         {
-            TrainingData t = new TrainingData(sensor);
+            RecordingData t = new RecordingData(sensor);
             t.Show();
         }
 
@@ -826,6 +826,12 @@ namespace FinalProject_KinectCoach
         {
             MenuItem mnu = e.Source as MenuItem;
             watchAction(mnu.Header.ToString().ToLower());
+        }
+
+        private void SpeechHelp(object sender, RoutedEventArgs e)
+        {
+            SpeechCommands s = new SpeechCommands();
+            s.Show();
         }
 
         ////////////////////
@@ -873,7 +879,7 @@ namespace FinalProject_KinectCoach
             actionFrames = new List<Skeleton>();
             actionFrameCount = 0;
 
-            stopRecording();
+            stopRecordingSkeleton();
         }
 
         ////////////////////
