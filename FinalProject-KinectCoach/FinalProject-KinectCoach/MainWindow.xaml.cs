@@ -24,25 +24,14 @@ namespace FinalProject_KinectCoach
     /// </summary>
     public partial class MainWindow : Window
     {
+        ///////////////////
+        // MAIN WINDOW CONTROL CODE
+        ///////////////////
+
         /// <summary>
         /// Active Kinect sensor.
         /// </summary>
         private KinectSensor sensor;
-
-        /// <summary>
-        /// Speech recognition engine using audio data from Kinect.
-        /// </summary>
-        private SpeechRecognitionEngine speechEngine;
-
-        /// <summary>
-        /// Stream of audio being captured by Kinect sensor.
-        /// </summary>
-        private Stream audioStream;
-
-        /// <summary>
-        /// Speech generation coach
-        /// </summary>
-        private CoachSpeech coach = new CoachSpeech();
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
@@ -53,51 +42,6 @@ namespace FinalProject_KinectCoach
             Application.Current.MainWindow.WindowState = WindowState.Maximized;
 
             this.KeyDown += new KeyEventHandler(OnButtonKeyDown);
-        }
-
-        private bool paused = false;
-
-        /// <summary>
-        /// Handle keypress events on windows
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnButtonKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Space)
-            {
-                if (paused)
-                {
-                    sensor.SkeletonFrameReady += SensorSkeletonFrameReady;
-                }
-                else
-                {
-                    sensor.SkeletonFrameReady -= SensorSkeletonFrameReady;
-                }
-                paused = !paused;
-            }
-        }
-
-        /// <summary>
-        /// Gets the metadata for the speech recognizer (acoustic model) most suitable to
-        /// process audio from Kinect device.
-        /// </summary>
-        /// <returns>
-        /// RecognizerInfo if found, <code>null</code> otherwise.
-        /// </returns>
-        private static RecognizerInfo GetKinectRecognizer()
-        {
-            foreach (RecognizerInfo recognizer in SpeechRecognitionEngine.InstalledRecognizers())
-            {
-                string value;
-                recognizer.AdditionalInfo.TryGetValue("Kinect", out value);
-                if ("True".Equals(value, StringComparison.OrdinalIgnoreCase) && "en-US".Equals(recognizer.Culture.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    return recognizer;
-                }
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -210,6 +154,78 @@ namespace FinalProject_KinectCoach
             }
         }
 
+        private void WindowActivated(object sender, EventArgs e)
+        {
+            sensor.SkeletonFrameReady += SensorSkeletonFrameReady;
+        }
+
+        private void WindowDeactivated(object sender, EventArgs e)
+        {
+            sensor.SkeletonFrameReady -= SensorSkeletonFrameReady;
+        }
+
+        /// <summary>
+        /// Handle keypress events on windows
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnButtonKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Space)
+            {
+                if (paused)
+                {
+                    sensor.SkeletonFrameReady += SensorSkeletonFrameReady;
+                }
+                else
+                {
+                    sensor.SkeletonFrameReady -= SensorSkeletonFrameReady;
+                }
+                paused = !paused;
+            }
+        }
+
+        ///////////////////
+        // SPEECH CODE
+        ///////////////////
+
+        /// <summary>
+        /// Speech recognition engine using audio data from Kinect.
+        /// </summary>
+        private SpeechRecognitionEngine speechEngine;
+
+        /// <summary>
+        /// Stream of audio being captured by Kinect sensor.
+        /// </summary>
+        private Stream audioStream;
+
+        /// <summary>
+        /// Speech generation coach
+        /// </summary>
+        private CoachSpeech coach = new CoachSpeech();
+
+        /// <summary>
+        /// Gets the metadata for the speech recognizer (acoustic model) most suitable to
+        /// process audio from Kinect device.
+        /// </summary>
+        /// <returns>
+        /// RecognizerInfo if found, <code>null</code> otherwise.
+        /// </returns>
+        private static RecognizerInfo GetKinectRecognizer()
+        {
+            foreach (RecognizerInfo recognizer in SpeechRecognitionEngine.InstalledRecognizers())
+            {
+                string value;
+                recognizer.AdditionalInfo.TryGetValue("Kinect", out value);
+                if ("True".Equals(value, StringComparison.OrdinalIgnoreCase) && "en-US".Equals(recognizer.Culture.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return recognizer;
+                }
+            }
+
+            return null;
+        }
+
         private SpeechRecognizedEventArgs previousSpeech;
 
         /// <summary>
@@ -220,6 +236,7 @@ namespace FinalProject_KinectCoach
         public void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
             // Ignore speech if the coach is talking
+            // (Does not work perfectly, confidence threshold set higher for this reason)
             if (coach.isSpeaking)
             {
                 return;
@@ -236,7 +253,7 @@ namespace FinalProject_KinectCoach
                         switch (e.Result.Semantics["command"].Value.ToString())
                         {
                             case "recording":
-                                startRecording();
+                                startRecording("recording");
                                 break;
                             case "stoprecording":
                                 stopRecording();
@@ -297,6 +314,11 @@ namespace FinalProject_KinectCoach
         ///////////////////
         // SKELETON CODE
         ///////////////////
+
+        /// <summary>
+        /// Determine whether or not to draw next skeleton
+        /// </summary>
+        private bool paused = false;
 
         /// <summary>
         /// Width of output drawing
@@ -429,12 +451,12 @@ namespace FinalProject_KinectCoach
                         this.DrawBonesAndJoints(currentPose.frame, dc);
                         break;
                     case DemoMode.ACTION:
-                        if (actionFrameCount == currentAction.frames.Count)
+                        if (actionFrameCount == currentAction.bestFrames.Count)
                         {
                             actionFrameCount = 0;
                         }
                         trackedBonePen = new Pen(Brushes.DarkGreen, 6);
-                        this.DrawBonesAndJoints(currentAction.frames.ElementAt(actionFrameCount), dc);
+                        this.DrawBonesAndJoints(currentAction.bestFrames.ElementAt(actionFrameCount), dc);
                         actionFrameCount++;
                         break;
                 }
@@ -471,22 +493,22 @@ namespace FinalProject_KinectCoach
                         }
                         break;
                     case CompareMode.ACTION:
-                        if (actionFrameCount >= currentAction.frames.Count)
+                        if (actionFrameCount >= currentAction.bestFrames.Count)
                         {
                             actionFrameCount = 0;
                         }
-                        this.DrawBonesAndJointsWithComparison(actionFrames.ElementAt(actionFrameCount), currentAction.getPoseOfFrame(actionFrameCount), dc);
+                        this.DrawBonesAndJointsWithComparison(actionFrames.ElementAt(actionFrameCount), currentAction.GetPoseOfFrame(actionFrameCount), dc);
                         actionFrameCount++;
                         break;
                     case CompareMode.SIMUL_ACTION:
-                        if (actionFrameCount >= currentAction.frames.Count)
+                        if (actionFrameCount >= currentAction.bestFrames.Count)
                         {
                             actionFrameCount = 0;
                         }
                         trackedBonePen = new Pen(Brushes.DarkGreen, 6);
-                        this.DrawBonesAndJoints(currentAction.frames.ElementAt(actionFrameCount), dc);
+                        this.DrawBonesAndJoints(currentAction.bestFrames.ElementAt(actionFrameCount), dc);
                         trackedBonePen = new Pen(Brushes.DarkBlue, 6);
-                        this.DrawBonesAndJointsWithComparison(actionFrames.ElementAt(actionFrameCount), currentAction.getPoseOfFrame(actionFrameCount), dc);
+                        this.DrawBonesAndJointsWithComparison(actionFrames.ElementAt(actionFrameCount), currentAction.GetPoseOfFrame(actionFrameCount), dc);
                         actionFrameCount++;
                         break;
                     case CompareMode.NONE:
@@ -771,10 +793,10 @@ namespace FinalProject_KinectCoach
             coordinatesStream.Close();
         }
 
-        private void startRecording()
+        private void startRecording(string prefix)
         {
             recording = true;
-            recordFileName = string.Format("recording-{0:yyyy-MM-dd_hh-mm-ss-tt}.txt", DateTime.Now);
+            recordFileName = string.Format(prefix + "-{0:yyyy-MM-dd_hh-mm-ss-tt}.txt", DateTime.Now);
             signal.Foreground = Brushes.DeepSkyBlue;
         }
 
@@ -785,9 +807,7 @@ namespace FinalProject_KinectCoach
         }
 
         ////////////////////
-        // MENU CODE
-        //
-        // Various menu event handlers
+        // MENU HANDLING CODE
         ////////////////////
 
         private void viewTrainingData(object sender, RoutedEventArgs e)
@@ -867,7 +887,7 @@ namespace FinalProject_KinectCoach
 
         private int actionFrameCount = 0;
 
-        private FencingAction currentAction = null;
+        private Gesture currentAction = null;
         private Skeleton lastFrame;
 
         private void checkActionStart(Skeleton skel)
@@ -912,8 +932,9 @@ namespace FinalProject_KinectCoach
 
         private void evaluateAction()
         {
-            actionFrames = currentAction.correctedFrames(actionFrames);
-            shiftedDemo = currentAction.getShiftedFrames(actionFrames.ElementAt(0).Joints[JointType.HipCenter].Position);
+            currentAction.DetermineBestFrames(actionFrames);
+            actionFrames = KinectFrameUtils.startCorrectedFrames(actionFrames, currentAction.bestFrames);
+            shiftedDemo = currentAction.GetShiftedFrames(actionFrames.ElementAt(0).Joints[JointType.HipCenter].Position);
             cpm = CompareMode.SIMUL_ACTION;
             dm = DemoMode.NONE;
             correctBonePen = new Pen(Brushes.Blue, 6);
@@ -923,8 +944,8 @@ namespace FinalProject_KinectCoach
         {
             clearAll();
             signal.Text = "Take start pose for " + action;
-            currentAction = new FencingAction(FencingAction.ACTION_DIRECTORY + "\\" + action + ".action");
-            currentAction.applyRotation(rotTransform);
+            currentAction = new Gesture(action);
+            currentAction.ApplyRotation(rotTransform);
             coach.speak("Enter starting position for " + action);
             actionFrameCount = 0;
             watchingAction = true;

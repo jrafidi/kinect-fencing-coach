@@ -4,5 +4,5 @@ ENDPOSE:ready
 ENDSCALAR:1
 STARTERROR:0.08,100,0.08,0.08,0.08
 ENDERROR:0.08,100,0.08,0.08,0.08
-TRAININGDATA:advance2.rec
+TRAININGDATA:advance1.rec,advance2.rec,advance3.rec,advance4.rec,advance5.rec
 ENDHEADER

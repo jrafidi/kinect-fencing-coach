@@ -68,7 +68,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CoachSpeech.cs" />
-    <Compile Include="FencingAction.cs" />
+    <Compile Include="Gesture.cs" />
     <Compile Include="KinectFileUtils.cs" />
     <Compile Include="KinectFrameUtils.cs" />
     <Compile Include="Pose.cs" />

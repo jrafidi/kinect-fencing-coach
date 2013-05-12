@@ -18,9 +18,13 @@ using AForge.Math;
 
 namespace FinalProject_KinectCoach
 {
+    /// <summary>
+    /// Util class with static methods for manipulation SkeletonPoint objects. 
+    /// Due to this object being a struct, I couldn't try encapsulating it to provide my own functionality. 
+    /// Hopefully there will be a better solution in the future.
+    /// </summary>
     class KinectFrameUtils
     {
-
         public static List<Skeleton> alignFrames(List<Skeleton> skels, int nFrames)
         {
             int diff = skels.Count - nFrames;
@@ -266,6 +270,58 @@ namespace FinalProject_KinectCoach
             r.Y = -p.Y;
             r.Z = -p.Z;
             return r;
+        }
+
+        public static double getTotalDistBetween(List<Skeleton> test, List<Skeleton> action)
+        {
+            List<Skeleton> aligned = alignFrames(test, action.Count);
+            double res = 0;
+            for (int i = 0; i < aligned.Count; i++) 
+            {
+                res += getDistBetweenFrames(aligned[i], action[i]); 
+            }
+
+            return res;
+        }
+
+        public static List<Skeleton> startCorrectedFrames(List<Skeleton> test, List<Skeleton> action)
+        {
+            test = KinectFrameUtils.alignFrames(test, action.Count);
+            double dist = totalDistTraveled(action);
+
+            int frameStart = -1;
+            int rawStart = -1;
+
+            for (int i = 0; i < action.Count; i++)
+            {
+                if (KinectFrameUtils.totalDistTraveled(action.GetRange(0, i)) > (dist / 5) && frameStart < 0)
+                {
+                    frameStart = i;
+                }
+
+                if (KinectFrameUtils.totalDistTraveled(test.GetRange(0, i)) > (dist / 5) && rawStart < 0)
+                {
+                    rawStart = i;
+                }
+            }
+
+            int diff = frameStart - rawStart;
+            if (diff > 0)
+            {
+                for (int i = 0; i < diff; i++)
+                {
+                    test.Insert(0, test[0]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < -diff; i++)
+                {
+                    test.RemoveAt(0);
+                    test.Add(test[test.Count - 1]);
+                }
+            }
+            return test;
         }
     }
 }

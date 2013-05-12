@@ -103,6 +103,37 @@ namespace FinalProject_KinectCoach
         {
             InitializeComponent();
             this.sensor = sensor;
+
+            this.KeyDown += new KeyEventHandler(OnButtonKeyDown);
+            sensor.SkeletonFrameReady += PlayNextFrame;
+        }
+
+        // Play control variables
+        private bool paused = true;
+        private bool playForward = true;
+        private bool fileLoaded = false;
+
+        /// <summary>
+        /// Handle keypress events on windows
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnButtonKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Down)
+            {
+                paused = !paused;
+            }
+            else if (e.Key == Key.Left)
+            {
+                playForward = false;
+                paused = false;
+            }
+            else if (e.Key == Key.Right)
+            {
+                playForward = true;
+                paused = false;
+            }
         }
 
         /// <summary>
@@ -123,6 +154,11 @@ namespace FinalProject_KinectCoach
 
             prevFrame.IsEnabled = false;
             nextFrame.IsEnabled = false;
+        }
+
+        private void WindowClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            sensor.SkeletonFrameReady -= PlayNextFrame;
         }
 
         /// <summary>
@@ -251,7 +287,8 @@ namespace FinalProject_KinectCoach
             {
                 // Open document
                 string filename = dlg.FileName;
-                FileNameTextBox.Text = filename;
+                string[] pieces = filename.Split('\\');
+                FileNameTextBox.Text = pieces[pieces.Length-1];
                 processFile(filename);
             }
         }
@@ -271,10 +308,38 @@ namespace FinalProject_KinectCoach
 
             prevFrame.IsEnabled = true;
             nextFrame.IsEnabled = true;
+            fileLoaded = true;
 
             FrameCount.Text = "1/" + frames.Count + " frames";
             currentFrame = 0;
             drawFileFrame();
+        }
+
+        private void PlayNextFrame(object sender, SkeletonFrameReadyEventArgs e)
+        {
+            if (paused || !fileLoaded)
+            {
+                return;
+            }
+
+            if (playForward)
+            {
+                if (currentFrame != (frames.Count - 1))
+                {
+                    currentFrame += 1;
+                    FrameCount.Text = (currentFrame + 1) + "/" + frames.Count + " frames";
+                    drawFileFrame();
+                }
+            }
+            else
+            {
+                if (currentFrame != 0)
+                {
+                    currentFrame -= 1;
+                    FrameCount.Text = (currentFrame + 1) + "/" + frames.Count + " frames";
+                    drawFileFrame();
+                }
+            }
         }
 
         private void drawFileFrame()
@@ -287,7 +352,6 @@ namespace FinalProject_KinectCoach
                 DrawBonesAndJoints(frames.ElementAt(currentFrame), dc);
             }
         }
-
 
         private void PreviousFrame(object sender, RoutedEventArgs e)
         {

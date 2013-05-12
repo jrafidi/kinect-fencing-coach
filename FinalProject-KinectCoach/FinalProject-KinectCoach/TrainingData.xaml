@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Training Data" Height="650" Width="700"
         Loaded="WindowLoaded"
+        Closing="WindowClosing"
         Icon="Images/Kinect.ico"
         WindowStartupLocation="Manual" 
         Left="0" Top="0" >
@@ -30,12 +31,12 @@
             <Image Name="Image" Width="640" Height="480"/>
         </Viewbox>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,3,0" VerticalAlignment="Center">
-            <TextBox Name="FileNameTextBox" Margin="0 0 -1 0" Width="200px" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="12" ></TextBox>
+            <TextBlock Name="FileNameTextBox" Margin="0 0 -1 0" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="16" />
             <Button Margin="10,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="16" Click="openFileDialog"><Run Text="Browse"/></Button>
         </StackPanel>
         <DockPanel Grid.Row="3" Margin="0 0 0 10">
-            <Button Name="prevFrame" DockPanel.Dock="Left"  Margin="10 0 -1 0" HorizontalAlignment="Left" VerticalAlignment="Bottom"  FontFamily="Segoe UI" FontSize="16" Click="PreviousFrame" MouseMove="PreviousFrame">Previous Frame</Button>
-            <Button Name="nextFrame" DockPanel.Dock="Right"  Margin="10 0 -1 0" HorizontalAlignment="Right" VerticalAlignment="Bottom"  FontFamily="Segoe UI" FontSize="16" Click="NextFrame" MouseMove="NextFrame">Next Frame</Button>
+            <Button Name="prevFrame" DockPanel.Dock="Left"  Margin="10 0 -1 0" HorizontalAlignment="Left" VerticalAlignment="Bottom"  FontFamily="Segoe UI" FontSize="16" Click="PreviousFrame" >Previous Frame</Button>
+            <Button Name="nextFrame" DockPanel.Dock="Right"  Margin="10 0 -1 0" HorizontalAlignment="Right" VerticalAlignment="Bottom"  FontFamily="Segoe UI" FontSize="16" Click="NextFrame" >Next Frame</Button>
             <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="16" Name="FrameCount">Frame Count</TextBlock>
         </DockPanel>
     </Grid>
