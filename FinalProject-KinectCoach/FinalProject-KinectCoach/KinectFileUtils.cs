@@ -20,7 +20,6 @@ namespace FinalProject_KinectCoach
 {
     class KinectFileUtils
     {
-
         public static List<Skeleton> ReadSkeletonFromRecordingFile(string filename)
         {
             List<Skeleton> frames = new List<Skeleton>();

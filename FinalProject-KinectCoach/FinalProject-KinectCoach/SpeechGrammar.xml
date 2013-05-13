@@ -54,6 +54,12 @@
         </one-of>
       </item>
       <item>
+        <tag>out.command="incorrect";</tag>
+        <one-of>
+          <item> what's wrong</item>
+        </one-of>
+      </item>
+      <item>
         <tag>out.command="again";</tag>
         <one-of>
           <item> redo that </item>

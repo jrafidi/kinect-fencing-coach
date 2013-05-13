@@ -357,6 +357,7 @@ namespace FinalProject_KinectCoach
         {
             if (currentFrame != 0)
             {
+                paused = true;
                 currentFrame -= 1;
                 FrameCount.Text = (currentFrame+1) + "/" + frames.Count + " frames";
                 drawFileFrame();
@@ -367,6 +368,7 @@ namespace FinalProject_KinectCoach
         {
             if (currentFrame != (frames.Count-1))
             {
+                paused = true;
                 currentFrame += 1;
                 FrameCount.Text = (currentFrame + 1) + "/" + frames.Count + " frames";
                 drawFileFrame();

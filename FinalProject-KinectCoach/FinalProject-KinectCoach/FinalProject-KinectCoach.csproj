@@ -68,16 +68,26 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CoachSpeech.cs" />
+    <Compile Include="HotkeyHelp.xaml.cs">
+      <DependentUpon>HotkeyHelp.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Gesture.cs" />
     <Compile Include="KinectFileUtils.cs" />
     <Compile Include="KinectFrameUtils.cs" />
     <Compile Include="Pose.cs" />
+    <Compile Include="SessionViewer.xaml.cs">
+      <DependentUpon>SessionViewer.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SpeechCommands.xaml.cs">
       <DependentUpon>SpeechCommands.xaml</DependentUpon>
     </Compile>
     <Compile Include="RecordingData.xaml.cs">
       <DependentUpon>RecordingData.xaml</DependentUpon>
     </Compile>
+    <Page Include="HotkeyHelp.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -90,6 +100,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="SessionViewer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="SpeechCommands.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -144,6 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Recordings\" />
+    <Folder Include="Sessions\" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="ScrapCode.txt" />

@@ -20,7 +20,7 @@ namespace FinalProject_KinectCoach
     class CoachSpeech
     {
         private SpeechSynthesizer synth;
-        public bool isSpeaking;
+        public bool isSpeaking { get; set;  }
 
         public CoachSpeech()
         {
@@ -61,9 +61,64 @@ namespace FinalProject_KinectCoach
                 case 2:
                     speak("Well done.");
                     break;
+                case 3:
+                    speak("Exactly.");
+                    break;
                 default:
                     speak("Correct.");
                     break;
+            }
+        }
+
+        public void sayErrors(List<Pose.JointError> errorList)
+        {
+            string text = "";
+
+            foreach (Pose.JointError err in errorList)
+            {
+                text += "Your " + getStringFromJointType(err.joint) + " is " + getStringFromErrorType(err.error) + ".  ";
+            }
+
+            speak(text);
+        }
+
+        private string getStringFromErrorType(Pose.ErrorType et)
+        {
+            switch (et)
+            {
+                case Pose.ErrorType.INSIDE: return "too far inside";
+                case Pose.ErrorType.OUTSIDE: return "too far outside";
+                case Pose.ErrorType.HIGH: return "too high";
+                case Pose.ErrorType.LOW: return "too low";
+                case Pose.ErrorType.FORWARD: return "too far forward";
+                default: return "too far backward";
+            }
+        }
+
+        private string getStringFromJointType(JointType jt)
+        {
+            switch (jt)
+            {
+                case JointType.HipCenter: return "Hip Center";
+                case JointType.Spine: return "Spine";
+                case JointType.ShoulderCenter: return "Shoulder Center";
+                case JointType.Head: return "Head";
+                case JointType.ShoulderLeft: return "Left Shoulder";
+                case JointType.ElbowLeft: return "Left Elbow";
+                case JointType.WristLeft: return "Left Wrist";
+                case JointType.HandLeft: return "Left Hand";
+                case JointType.ShoulderRight: return "Right Shoulder";
+                case JointType.ElbowRight: return "Right Elbow";
+                case JointType.WristRight: return "Right Wrist";
+                case JointType.HandRight: return "Right Hand";
+                case JointType.HipLeft: return "Left Hip";
+                case JointType.KneeLeft: return "Left Knee";
+                case JointType.AnkleLeft: return "Left Ankle";
+                case JointType.FootLeft: return "Left Foot";
+                case JointType.HipRight: return "Right Hip";
+                case JointType.KneeRight: return "Right Knee";
+                case JointType.AnkleRight: return "Right Ankle";
+                default: return "Right Foot";
             }
         }
     }

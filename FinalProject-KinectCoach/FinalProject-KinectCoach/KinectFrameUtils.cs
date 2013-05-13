@@ -25,20 +25,6 @@ namespace FinalProject_KinectCoach
     /// </summary>
     class KinectFrameUtils
     {
-        public struct JointError
-        {
-            public JointType type;
-            public double x, y, z;
-
-            public JointError(JointType t, double xe, double ye, double ze)
-            {
-                type = t;
-                x = xe;
-                y = ye;
-                z = ze;
-            }
-        }
-
         public static List<Skeleton> alignFrames(List<Skeleton> skels, int nFrames)
         {
             int diff = skels.Count - nFrames;

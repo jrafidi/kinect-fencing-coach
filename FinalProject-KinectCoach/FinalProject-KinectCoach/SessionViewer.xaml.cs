@@ -20,9 +20,9 @@ using System.Windows.Controls;
 namespace FinalProject_KinectCoach
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for SessionViewer.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class SessionViewer : Window
     {
         ///////////////////
         // MAIN WINDOW CONTROL CODE
@@ -36,10 +36,11 @@ namespace FinalProject_KinectCoach
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
         /// </summary>
-        public MainWindow()
+        public SessionViewer(KinectSensor sensor)
         {
             InitializeComponent();
             Application.Current.MainWindow.WindowState = WindowState.Maximized;
+            this.sensor = sensor;
 
             this.KeyDown += new KeyEventHandler(OnButtonKeyDown);
         }
@@ -60,73 +61,10 @@ namespace FinalProject_KinectCoach
             // Display the drawing using our image control
             Image.Source = this.imageSource;
 
-            // Look through all sensors and start the first connected one.
-            // This requires that a Kinect is connected at the time of app startup.
-            // To make your app robust against plug/unplug, 
-            // it is recommended to use KinectSensorChooser provided in Microsoft.Kinect.Toolkit (See components in Toolkit Browser).
-            foreach (var potentialSensor in KinectSensor.KinectSensors)
-            {
-                if (potentialSensor.Status == KinectStatus.Connected)
-                {
-                    this.sensor = potentialSensor;
-                    break;
-                }
-            }
-
-            if (null != this.sensor)
-            {
-                // Turn on the skeleton stream to receive skeleton frames
-                this.sensor.SkeletonStream.Enable();
-
-                // Add an event handler to be called whenever there is new color frame data
-                this.sensor.SkeletonFrameReady += this.SensorSkeletonFrameReady;
-
-                try
-                {
-                    // Start the sensor!
-                    this.sensor.Start();
-                }
-                catch (IOException)
-                {
-                    // Some other application is streaming from the same Kinect sensor
-                    this.sensor = null;
-                }
-            }
-
             if (null == this.sensor)
             {
                 signal.Text = "No Kinect detected";
                 return;
-            }
-
-            RecognizerInfo ri = GetKinectRecognizer();
-            this.audioStream = this.sensor.AudioSource.Start();
-
-            if (null != ri)
-            {
-
-                this.speechEngine = new SpeechRecognitionEngine(ri.Id);
-
-                // Create a grammar from grammar definition XML file.
-                using (var memoryStream = new MemoryStream(Encoding.ASCII.GetBytes(Properties.Resources.SpeechGrammar)))
-                {
-                    var g = new Grammar(memoryStream);
-                    speechEngine.LoadGrammar(g);
-                }
-
-                speechEngine.SpeechRecognized += SpeechRecognized;
-
-                // For long recognition sessions (a few hours or more), it may be beneficial to turn off adaptation of the acoustic model. 
-                // This will prevent recognition accuracy from degrading over time.
-                ////speechEngine.UpdateRecognizerSetting("AdaptationOn", 0);
-
-                speechEngine.SetInputToAudioStream(
-                    this.audioStream, new SpeechAudioFormatInfo(EncodingFormat.Pcm, 16000, 16, 1, 32000, 2, null));
-                speechEngine.RecognizeAsync(RecognizeMode.Multiple);
-            }
-            else
-            {
-                signal.Text = Properties.Resources.NoSpeechRecognizer;
             }
         }
 
@@ -139,41 +77,9 @@ namespace FinalProject_KinectCoach
         {
             if (null != this.sensor)
             {
-                this.sensor.AudioSource.Stop();
-                this.sensor.SkeletonFrameReady -= this.SensorSkeletonFrameReady;
-
                 this.sensor.Stop();
                 this.sensor = null;
             }
-
-            if (null != this.speechEngine)
-            {
-                this.speechEngine.SpeechRecognized -= SpeechRecognized;
-                this.speechEngine.RecognizeAsyncStop();
-                this.speechEngine.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Execute Window activation tasks
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void WindowActivated(object sender, EventArgs e)
-        {
-            sensor.SkeletonFrameReady += SensorSkeletonFrameReady;
-            speechEngine.SpeechRecognized += SpeechRecognized;
-        }
-
-        /// <summary>
-        /// Execute Window deactivation tasks
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void WindowDeactivated(object sender, EventArgs e)
-        {
-            sensor.SkeletonFrameReady -= SensorSkeletonFrameReady;
-            speechEngine.SpeechRecognized -= SpeechRecognized;
         }
 
         /// <summary>
@@ -183,33 +89,11 @@ namespace FinalProject_KinectCoach
         /// <param name="e"></param>
         private void OnButtonKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Space)
-            {
-                if (paused)
-                {
-                    sensor.SkeletonFrameReady += SensorSkeletonFrameReady;
-                }
-                else
-                {
-                    sensor.SkeletonFrameReady -= SensorSkeletonFrameReady;
-                }
-                paused = !paused;
-            }
         }
 
         ///////////////////
         // SPEECH CODE
         ///////////////////
-
-        /// <summary>
-        /// Speech recognition engine using audio data from Kinect.
-        /// </summary>
-        private SpeechRecognitionEngine speechEngine;
-
-        /// <summary>
-        /// Stream of audio being captured by Kinect sensor.
-        /// </summary>
-        private Stream audioStream;
 
         /// <summary>
         /// Speech generation coach
@@ -220,28 +104,6 @@ namespace FinalProject_KinectCoach
         /// Previous speech event, for repeating
         /// </summary>
         private SpeechRecognizedEventArgs previousSpeech;
-
-        /// <summary>
-        /// Gets the metadata for the speech recognizer (acoustic model) most suitable to
-        /// process audio from Kinect device.
-        /// </summary>
-        /// <returns>
-        /// RecognizerInfo if found, <code>null</code> otherwise.
-        /// </returns>
-        private static RecognizerInfo GetKinectRecognizer()
-        {
-            foreach (RecognizerInfo recognizer in SpeechRecognitionEngine.InstalledRecognizers())
-            {
-                string value;
-                recognizer.AdditionalInfo.TryGetValue("Kinect", out value);
-                if ("True".Equals(value, StringComparison.OrdinalIgnoreCase) && "en-US".Equals(recognizer.Culture.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    return recognizer;
-                }
-            }
-
-            return null;
-        }
 
         /// <summary>
         /// Handler for recognized speech events.
@@ -267,12 +129,6 @@ namespace FinalProject_KinectCoach
                     case "simple":
                         switch (e.Result.Semantics["command"].Value.ToString())
                         {
-                            case "recording":
-                                startRecordingSkeleton("recording");
-                                break;
-                            case "stoprecording":
-                                stopRecordingSkeleton();
-                                break;
                             case "show":
                                 if (currentPose != null)
                                 {
@@ -285,9 +141,6 @@ namespace FinalProject_KinectCoach
                                 break;
                             case "hide":
                                 dm = DemoMode.NONE;
-                                break;
-                            case "incorrect":
-                                critiquePose = true;
                                 break;
                             case "again":
                                 if (previousSpeech != null)
@@ -489,15 +342,8 @@ namespace FinalProject_KinectCoach
                                 this.DrawBonesAndJointsWithComparison(skel, currentPose, dc);
                                 if (currentPose.matchesSkeleton(skel, 1))
                                 {
-                                    critiquePose = false;
                                     coach.sayCorrect();
                                     clearAll();
-                                }
-
-                                if (critiquePose)
-                                {
-                                    coach.sayErrors(currentPose.getSignificantErrors(skel));
-                                    critiquePose = false;
                                 }
                             }
                         }
@@ -576,11 +422,6 @@ namespace FinalProject_KinectCoach
         /// <param name="drawingContext">drawing context to draw to</param>
         private void DrawBonesAndJoints(Skeleton skeleton, DrawingContext drawingContext)
         {
-            // Record Skeleton data if recording
-            if (recording)
-            {
-                saveCoordinates(skeleton, recordFileName);
-            }
 
             // Render Torso
             this.DrawBone(skeleton, drawingContext, JointType.Head, JointType.ShoulderCenter, trackedBonePen);
@@ -798,84 +639,6 @@ namespace FinalProject_KinectCoach
         }
 
         ////////////////////
-        // SKELETON RECORDING CODE
-        ////////////////////
-
-        private string recordDirectory = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
-        private string recordFileName;
-        private bool recording = false;
-
-        /// <summary>
-        /// Saves the skeleton coordinates to a file, with each frame separated by "FRAME"
-        /// </summary>
-        /// <param name="skeleton"></param>
-        /// <param name="textFile"></param>
-        private void saveCoordinates(Skeleton skeleton, string textFile)
-        {
-            StreamWriter coordinatesStream = File.AppendText(recordDirectory + "\\" + textFile);
-            coordinatesStream.WriteLine("FRAME");
-            foreach (Joint joint in skeleton.Joints)
-            {
-                coordinatesStream.WriteLine(joint.JointType + ", " + joint.TrackingState + ", " + joint.Position.X + ", " + joint.Position.Y + ", " + joint.Position.Z);
-            }
-            coordinatesStream.Close();
-        }
-
-        /// <summary>
-        /// Starts saving skeleton information to dated file, prefixed with input 'prefix'
-        /// </summary>
-        /// <param name="prefix"></param>
-        private void startRecordingSkeleton(string prefix)
-        {
-            recording = true;
-            recordFileName = string.Format(prefix + "-{0:yyyy-MM-dd_hh-mm-ss-tt}.txt", DateTime.Now);
-            signal.Foreground = Brushes.DeepSkyBlue;
-        }
-
-        /// <summary>
-        /// Stops recording skeleton information to file
-        /// </summary>
-        private void stopRecordingSkeleton()
-        {
-            recording = false;
-            signal.Foreground = Brushes.Black;
-        }
-
-        ////////////////////
-        // MENU HANDLING CODE
-        ////////////////////
-
-        private void viewTrainingData(object sender, RoutedEventArgs e)
-        {
-            RecordingData t = new RecordingData(sensor);
-            t.Show();
-        }
-
-        private void PoseClick(object sender, RoutedEventArgs e)
-        {
-            MenuItem mnu = e.Source as MenuItem;
-            checkPose(mnu.Header.ToString().ToLower());
-        }
-
-        private void ActionClick(object sender, RoutedEventArgs e)
-        {
-            MenuItem mnu = e.Source as MenuItem;
-            watchAction(mnu.Header.ToString().ToLower());
-        }
-
-        private void SpeechHelp(object sender, RoutedEventArgs e)
-        {
-            SpeechCommands s = new SpeechCommands();
-            s.Show();
-        }
-
-        private void HotkeyHelp(object sender, RoutedEventArgs e)
-        {
-            HotkeyHelp hh = new HotkeyHelp();
-            hh.Show();
-        }
-
-        ////////////////////
         // POSE CHECKING CODE
         ////////////////////
 
@@ -891,7 +654,6 @@ namespace FinalProject_KinectCoach
 
         private CompareMode cpm = CompareMode.NONE;
         private DemoMode dm = DemoMode.NONE;
-        private bool critiquePose = false;
 
         private Pose currentPose = null;
 
@@ -920,8 +682,6 @@ namespace FinalProject_KinectCoach
             actionStarted = false;
             actionFrames = new List<Skeleton>();
             actionFrameCount = 0;
-
-            stopRecordingSkeleton();
         }
 
         ////////////////////

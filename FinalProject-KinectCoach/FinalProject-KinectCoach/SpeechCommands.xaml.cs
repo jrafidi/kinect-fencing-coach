@@ -39,6 +39,7 @@ namespace FinalProject_KinectCoach
             text += "  'Check my [Pose Name]': starts checking for pose [Pose Name]\n";
             text += "  'Demonstrate for me': shows sample of chosen pose\n";
             text += "  'Hide demo/Got it': hides sample of chosen pose\n";
+            text += "  'What's wrong': coach will tell you which joints aren't matching the pose in which directions\n";
 
             text += "\nAction Commands:\n";
             text += "  'Watch my [Action Name]': starts watching for action [Action Name]\n";
