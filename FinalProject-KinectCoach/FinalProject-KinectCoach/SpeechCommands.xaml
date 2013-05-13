@@ -12,7 +12,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" Margin="0 0 0 5">
-            <TextBlock DockPanel.Dock="Left"  Margin="0 0 -1 0" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Foreground="{StaticResource MediumGreyBrush}" FontFamily="Segoe UI" FontSize="16">Kinect Fencing Coach Speech Commands</TextBlock>
+            <TextBlock DockPanel.Dock="Left"  Margin="0 0 -1 0" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Foreground="{StaticResource MediumGreyBrush}" FontFamily="Segoe UI" FontSize="16">Kinect Coach Speech Commands</TextBlock>
 
         </DockPanel>
         <ScrollViewer Grid.Row="1">

@@ -103,14 +103,14 @@ namespace FinalProject_KinectCoach
         /// <summary>
         /// Previous speech event, for repeating
         /// </summary>
-        private SpeechRecognizedEventArgs previousSpeech;
+        private string previousSpeech;
 
         /// <summary>
         /// Handler for recognized speech events.
         /// </summary>
         /// <param name="sender">object sending the event.</param>
         /// <param name="e">event arguments.</param>
-        public void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
+        public void SpeechRecognized(string recognizedSpeech)
         {
             // Ignore speech if the coach is talking
             // (Does not work perfectly, confidence threshold set higher for this reason)
@@ -120,63 +120,61 @@ namespace FinalProject_KinectCoach
             }
 
             // Speech utterance confidence below which we treat speech as if it hadn't been heard
-            const double ConfidenceThreshold = 0.6;
+            string[] parts = recognizedSpeech.Split(':');
 
-            if (e.Result.Confidence >= ConfidenceThreshold)
+            switch (parts[0])
             {
-                switch (e.Result.Semantics["type"].Value.ToString())
-                {
-                    case "simple":
-                        switch (e.Result.Semantics["command"].Value.ToString())
-                        {
-                            case "show":
-                                if (currentPose != null)
-                                {
-                                    dm = DemoMode.POSE;
-                                }
-                                else if (currentAction != null)
-                                {
-                                    dm = DemoMode.ACTION;
-                                }
-                                break;
-                            case "hide":
-                                dm = DemoMode.NONE;
-                                break;
-                            case "again":
-                                if (previousSpeech != null)
-                                {
-                                    SpeechRecognized(null, previousSpeech);
-                                }
-                                break;
-                            case "exit":
-                                this.Close();
-                                break;
-                            case "clear":
-                                clearAll();
-                                break;
-                            case "callibrate":
-                                cpm = CompareMode.CALLIBRATE;
-                                break;
-                            case "showdemoaction":
-                                actionFrameCount = 0;
-                                cpm = cpm == CompareMode.ACTION ? CompareMode.SIMUL_ACTION : cpm;
-                                break;
-                            case "hidedemoaction":
-                                actionFrameCount = 0;
-                                cpm = cpm == CompareMode.SIMUL_ACTION ? CompareMode.ACTION : cpm;
-                                break;
-                        }
-                        break;
-                    case "pose":
-                        checkPose(e.Result.Semantics["pose"].Value.ToString());
-                        previousSpeech = e;
-                        break;
-                    case "action":
-                        watchAction(e.Result.Semantics["action"].Value.ToString());
-                        previousSpeech = e;
-                        break;
-                }
+                case "simple":
+                    switch (parts[1])
+                    {
+                        case "show":
+                            if (currentPose != null)
+                            {
+                                dm = DemoMode.POSE;
+                            }
+                            else if (currentAction != null)
+                            {
+                                dm = DemoMode.ACTION;
+                            }
+                            break;
+                        case "hide":
+                            dm = DemoMode.NONE;
+                            break;
+                        case "again":
+                            if (previousSpeech != null)
+                            {
+                                SpeechRecognized(previousSpeech);
+                            }
+                            break;
+                        case "exit":
+                            this.Close();
+                            break;
+                        case "clear":
+                            clearAll();
+                            break;
+                        case "callibrate":
+                            cpm = CompareMode.CALLIBRATE;
+                            break;
+                        case "showdemoaction":
+                            actionFrameCount = 0;
+                            cpm = cpm == CompareMode.ACTION ? CompareMode.SIMUL_ACTION : cpm;
+                            break;
+                        case "hidedemoaction":
+                            actionFrameCount = 0;
+                            cpm = cpm == CompareMode.SIMUL_ACTION ? CompareMode.ACTION : cpm;
+                            break;
+                    }
+                    break;
+                case "pose":
+                    checkPose(parts[1]);
+                    previousSpeech = recognizedSpeech;
+                    break;
+                case "action":
+                    watchAction(parts[1]);
+                    previousSpeech = recognizedSpeech;
+                    break;
             }
+            
         }
 
         ///////////////////

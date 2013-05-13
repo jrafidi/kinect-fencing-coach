@@ -18,7 +18,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" Margin="0 0 0 10">
-            <TextBlock DockPanel.Dock="Left"  Margin="10 0 -1 0" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Foreground="{StaticResource MediumGreyBrush}" FontFamily="Segoe UI" FontSize="24">Kinect Fencing Coach Recording Data</TextBlock>
+            <TextBlock DockPanel.Dock="Left"  Margin="10 0 -1 0" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Foreground="{StaticResource MediumGreyBrush}" FontFamily="Segoe UI" FontSize="24">Kinect Coach Recording Data</TextBlock>
             <StackPanel Orientation="Vertical" DockPanel.Dock="Right" Margin="0,0,3,0" VerticalAlignment="Bottom">
                 <TextBlock Margin="0 0 -1 0" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="{StaticResource MediumGreyBrush}" FontFamily="Segoe UI" FontSize="12"><Run Text="Joey Rafidi"/></TextBlock>
                 <TextBlock DockPanel.Dock="Right" Margin="0,0,-1,0" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="{StaticResource MediumGreyBrush}" FontFamily="Segoe UI" FontSize="12" ><Run Text="6.835 Spring 2013"/></TextBlock>

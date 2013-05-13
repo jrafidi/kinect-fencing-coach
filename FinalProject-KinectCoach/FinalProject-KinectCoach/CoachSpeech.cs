@@ -17,6 +17,9 @@ using System.Linq;
 
 namespace FinalProject_KinectCoach
 {
+    /// <summary>
+    /// Object to contain all automated speaking logic
+    /// </summary>
     class CoachSpeech
     {
         private SpeechSynthesizer synth;
@@ -91,7 +94,7 @@ namespace FinalProject_KinectCoach
                 case Pose.ErrorType.HIGH: return "too high";
                 case Pose.ErrorType.LOW: return "too low";
                 case Pose.ErrorType.FORWARD: return "too far forward";
-                default: return "too far backward";
+                default: return "too far back";
             }
         }
 
