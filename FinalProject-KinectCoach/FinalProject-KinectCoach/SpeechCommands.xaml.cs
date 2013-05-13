@@ -32,7 +32,6 @@ namespace FinalProject_KinectCoach
             text += "  'Start Recording': starts recording skeletons to dated file\n";
             text += "  'Stop Recording': stops recording skeletons to file\n";
             text += "  'Callibrate': saves rotational differences. Must be done prior to working with default training data.\n";
-            text += "  'Remove Callibration': removes callibration\n";
             text += "  'Redo That/Once More': redo last command that was not a simple command.\n";
             text += "  'Clear All': ends existing practice (pose or action)\n";
 

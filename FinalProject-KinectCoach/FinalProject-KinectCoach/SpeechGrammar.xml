@@ -72,12 +72,6 @@
           <item> callibrate </item>
         </one-of>
       </item>
-      <item>
-        <tag>out.command="uncallibrate";</tag>
-        <one-of>
-          <item> remove callibration </item>
-        </one-of>
-      </item>
     </one-of>
   </rule>
   

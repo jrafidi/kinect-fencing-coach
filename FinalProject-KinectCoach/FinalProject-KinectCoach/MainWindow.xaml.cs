@@ -286,9 +286,6 @@ namespace FinalProject_KinectCoach
                             case "callibrate":
                                 cpm = CompareMode.CALLIBRATE;
                                 break;
-                            case "uncallibrate":
-                                rotTransform = Matrix3x3.Identity;
-                                break;
                             case "showdemoaction":
                                 actionFrameCount = 0;
                                 cpm = cpm == CompareMode.ACTION ? CompareMode.SIMUL_ACTION : cpm;

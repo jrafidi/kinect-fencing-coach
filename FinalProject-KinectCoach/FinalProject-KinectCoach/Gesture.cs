@@ -54,6 +54,14 @@ namespace FinalProject_KinectCoach
                 trainingDataFrames.Add(KinectFileUtils.ReadSkeletonFromRecordingFile(ACTION_DIRECTORY + "\\" + s));
             }
 
+            foreach (List<Skeleton> train in trainingDataFrames)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    train.Add(train[train.Count - 1]);
+                }
+            }
+
             bestFrames = trainingDataFrames[0];
             dist = KinectFrameUtils.totalDistTraveled(bestFrames);
         }
@@ -106,14 +114,17 @@ namespace FinalProject_KinectCoach
 
         public void ApplyRotation(Matrix3x3 trans)
         {
-            foreach (List<Skeleton> tFrames in trainingDataFrames)
+            for (int j = 0; j < trainingDataFrames.Count; j++)
             {
+                List<Skeleton> tFrames = trainingDataFrames[j];
+                List<Skeleton> newFrames = new List<Skeleton>();
                 for (int i = 0; i < tFrames.Count; i++)
                 {
-                    tFrames[i] = KinectFrameUtils.transRotateTrans(tFrames[i], trans);
+                    newFrames.Add(KinectFrameUtils.transRotateTrans(tFrames[i], trans));
                 }
+                trainingDataFrames[j] = newFrames;
             }
-
+            bestFrames = trainingDataFrames[0];
             startPose.applyTransform(trans);
             endPose.applyTransform(trans);
         }
