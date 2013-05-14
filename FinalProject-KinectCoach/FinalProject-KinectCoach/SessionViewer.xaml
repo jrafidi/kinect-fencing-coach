@@ -19,7 +19,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
             <RowDefinition Height="600"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="40"/>
             <RowDefinition Height="40"/>
             <RowDefinition Height="40"/>
@@ -49,5 +48,11 @@
                 <TextBlock Name="signal" Margin="0 0 0 20" Grid.Row="3" FontSize="48" HorizontalAlignment="Center" >Ready</TextBlock>
             </Grid>
         </Border>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,3,0">
+            <TextBlock Name="FileNameTextBox" Margin="0 0 -1 0" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="16" >Select a file</TextBlock>
+            <Button Margin="10,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="16" Click="openFileDialog">
+                <Run Text="Browse"/>
+            </Button>
+        </StackPanel>
     </Grid>
 </Window>

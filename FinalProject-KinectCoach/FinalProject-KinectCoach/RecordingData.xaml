@@ -31,7 +31,7 @@
             <Image Name="Image" Width="640" Height="480"/>
         </Viewbox>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,3,0" VerticalAlignment="Center">
-            <TextBlock Name="FileNameTextBox" Margin="0 0 -1 0" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="16" />
+            <TextBlock Name="FileNameTextBox" Margin="0 0 -1 0" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="16" >Select a file</TextBlock>
             <Button Margin="10,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="16" Click="openFileDialog"><Run Text="Browse"/></Button>
         </StackPanel>
         <DockPanel Grid.Row="3" Margin="0 0 0 10">

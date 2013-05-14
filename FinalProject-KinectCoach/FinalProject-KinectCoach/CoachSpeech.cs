@@ -18,7 +18,7 @@ using System.Linq;
 namespace FinalProject_KinectCoach
 {
     /// <summary>
-    /// Object to contain all automated speaking logic
+    /// Object to contain all automated coach speaking logic
     /// </summary>
     class CoachSpeech
     {
@@ -32,14 +32,15 @@ namespace FinalProject_KinectCoach
 
             synth.SpeakStarted += synth_SpeakStarted;
             synth.SpeakCompleted += synth_SpeakCompleted;
+            synth.SelectVoice("Microsoft Server Speech Text to Speech Voice (en-US, Helen)");
         }
 
-        void synth_SpeakStarted(object sender, SpeakStartedEventArgs e)
+        private void synth_SpeakStarted(object sender, SpeakStartedEventArgs e)
         {
             isSpeaking = true;
         }
 
-        void synth_SpeakCompleted(object sender, SpeakCompletedEventArgs e)
+        private void synth_SpeakCompleted(object sender, SpeakCompletedEventArgs e)
         {
             isSpeaking = false;
         }
