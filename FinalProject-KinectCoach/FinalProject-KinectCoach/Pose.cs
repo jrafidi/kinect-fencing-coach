@@ -19,7 +19,7 @@ namespace FinalProject_KinectCoach
 {
     class Pose
     {
-        public static string POSE_DIRECTORY = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
+        public static string POSE_DIRECTORY = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings\\Poses";
         static readonly double defaultError = 0.1;
 
         string filepath;
@@ -37,12 +37,22 @@ namespace FinalProject_KinectCoach
             public JointType joint;
             public ErrorType error;
             public double mag;
+            public int frame;
 
             public JointError(JointType t, ErrorType e, double m)
             {
                 joint = t;
                 error = e;
                 mag = m;
+                frame = 0;
+            }
+
+            public JointError(JointType jointType, ErrorType errorType, double p, int i)
+            {
+                joint = jointType;
+                error = errorType;
+                mag = p;
+                frame = i;
             }
         }
 
@@ -70,7 +80,7 @@ namespace FinalProject_KinectCoach
             this.frame = frame;
         }
 
-        public void setErrors(double te, double lae, double rae, double lle, double rle)
+        public void SetErrors(double te, double lae, double rae, double lle, double rle)
         {
             this.torsoError = te;
             this.leftArmError = lae;
@@ -79,7 +89,7 @@ namespace FinalProject_KinectCoach
             this.rightLegError = rle;
         }
 
-        public void scaleErrors(float scalar)
+        public void ScaleErrors(float scalar)
         {
             torsoError = torsoError * scalar;
             leftArmError = leftArmError * scalar;
@@ -88,7 +98,7 @@ namespace FinalProject_KinectCoach
             rightLegError = rightLegError * scalar;
         }
 
-        public Dictionary<JointType, double> getErrorMap(Skeleton skeleton)
+        public Dictionary<JointType, double> GetErrorMap(Skeleton skeleton)
         {
             Dictionary<JointType, double> errorMap = new Dictionary<JointType, double>();
 
@@ -110,9 +120,9 @@ namespace FinalProject_KinectCoach
             return errorMap;
         }
 
-        public bool matchesSkeleton(Skeleton skeleton, int allowedIncorrect)
+        public bool MatchesSkeleton(Skeleton skeleton, int allowedIncorrect)
         {
-            Dictionary<JointType, double> errorMap = this.getErrorMap(skeleton);
+            Dictionary<JointType, double> errorMap = this.GetErrorMap(skeleton);
 
             int incorrect = 0;
 
@@ -149,12 +159,12 @@ namespace FinalProject_KinectCoach
             return incorrect <= allowedIncorrect;
         }
 
-        public void applyTransform(Matrix3x3 transform)
+        public void ApplyTransform(Matrix3x3 transform)
         {
-            frame = KinectFrameUtils.transRotateTrans(frame, transform);
+            frame = KinectFrameUtils.TransRotateTrans(frame, transform);
         }
 
-        public List<JointError> getSignificantErrors(Skeleton testFrame, Matrix3x3 trans)
+        public List<JointError> GetSignificantErrors(Skeleton testFrame, Matrix3x3 trans)
         {
             List<JointError> res = new List<JointError>();
 
@@ -169,7 +179,7 @@ namespace FinalProject_KinectCoach
             shift.Y = model.Joints[JointType.HipCenter].Position.Y - test.Joints[JointType.HipCenter].Position.Y;
             shift.Z = model.Joints[JointType.HipCenter].Position.Z - test.Joints[JointType.HipCenter].Position.Z;
 
-            Skeleton shifted = KinectFrameUtils.shiftFrame(test, KinectFrameUtils.negPos(shift));
+            Skeleton shifted = KinectFrameUtils.ShiftFrame(test, KinectFrameUtils.NegativePosition(shift));
 
             foreach (Joint j in shifted.Joints)
             {
@@ -184,7 +194,7 @@ namespace FinalProject_KinectCoach
                 errorMap.Add(j.JointType, errors);
             }
 
-            List<JointType> badJoints = getMajorIncorrectJoints(shifted);
+            List<JointType> badJoints = GetMajorIncorrectJoints(shifted);
 
             foreach (JointType j in badJoints)
             {
@@ -230,9 +240,9 @@ namespace FinalProject_KinectCoach
             return res;
         }
 
-        private List<JointType> getMajorIncorrectJoints(Skeleton frame)
+        private List<JointType> GetMajorIncorrectJoints(Skeleton frame)
         {
-            Dictionary<JointType, double> errorMap = getErrorMap(frame);
+            Dictionary<JointType, double> errorMap = GetErrorMap(frame);
             List<JointType> res = new List<JointType>();
 
             foreach (JointType j in errorMap.Keys)
@@ -242,7 +252,7 @@ namespace FinalProject_KinectCoach
                     continue;
                 }
 
-                if (errorMap[j] > getErrorFromJoint(j))
+                if (errorMap[j] > GetErrorFromJoint(j))
                 {
                     res.Add(j);
                 }
@@ -251,7 +261,7 @@ namespace FinalProject_KinectCoach
             return res;
         }
 
-        private double getErrorFromJoint(JointType jt)
+        private double GetErrorFromJoint(JointType jt)
         {
             if (jt == JointType.HipCenter || jt == JointType.Head || jt == JointType.ShoulderCenter || jt == JointType.Spine)
             {

@@ -22,72 +22,133 @@ namespace FinalProject_KinectCoach
     /// </summary>
     class CoachSpeech
     {
+        private readonly int frameErrorMinimum = 6;
+        private readonly int numberErrorsMentioned = 3;
+
         private SpeechSynthesizer synth;
-        public bool isSpeaking { get; set;  }
+
+        public bool isSpeaking { get; set; }
 
         public CoachSpeech()
         {
             synth = new SpeechSynthesizer();
             synth.SetOutputToDefaultAudioDevice();
 
-            synth.SpeakStarted += synth_SpeakStarted;
-            synth.SpeakCompleted += synth_SpeakCompleted;
+            synth.SpeakStarted += SpeakStarted;
+            synth.SpeakCompleted += SpeakCompleted;
             synth.SelectVoice("Microsoft Server Speech Text to Speech Voice (en-US, Helen)");
         }
 
-        private void synth_SpeakStarted(object sender, SpeakStartedEventArgs e)
+        private void SpeakStarted(object sender, SpeakStartedEventArgs e)
         {
             isSpeaking = true;
         }
 
-        private void synth_SpeakCompleted(object sender, SpeakCompletedEventArgs e)
+        private void SpeakCompleted(object sender, SpeakCompletedEventArgs e)
         {
             isSpeaking = false;
         }
 
-        public void speak(string phrase)
+        public void Speak(string phrase)
         {
             synth.SpeakAsyncCancelAll();
             synth.SpeakAsync(phrase);
         }
 
-        public void sayCorrect()
+        public void SayCorrect()
         {
             Random r = new Random();
             switch (r.Next(0, 4))
             {
                 case 0:
-                    speak("That's right.");
+                    Speak("That's right.");
                     break;
                 case 1:
-                    speak("Good.");
+                    Speak("Good.");
                     break;
                 case 2:
-                    speak("Well done.");
+                    Speak("Well done.");
                     break;
                 case 3:
-                    speak("Exactly.");
+                    Speak("Exactly.");
                     break;
                 default:
-                    speak("Correct.");
+                    Speak("Correct.");
                     break;
             }
         }
 
-        public void sayErrors(List<Pose.JointError> errorList)
+        public void SayPoseErrors(List<Pose.JointError> errorList)
         {
             string text = "";
 
             errorList.Sort((s1, s2) => s1.mag.CompareTo(s2.mag));
             errorList.Reverse();
 
-            for (int i = 0; i < Math.Min(3, errorList.Count); i++ )
+            for (int i = 0; i < Math.Min(numberErrorsMentioned, errorList.Count); i++)
             {
                 Pose.JointError err = errorList[i];
                 text += "Your " + getStringFromJointType(err.joint) + " is " + getStringFromErrorType(err.error) + ".  ";
             }
 
-            speak(text);
+            Speak(text);
+        }
+
+        public void SayActionErrors(List<Pose.JointError> errorList, int nFrames)
+        {
+            errorList.Sort((s1, s2) => s1.mag.CompareTo(s2.mag));
+            errorList.Reverse();
+
+            Dictionary<string, int> errorDict = new Dictionary<string, int>();
+
+            for (int i = 0; i < errorList.Count; i++)
+            {
+                string text = "";
+                Pose.JointError err = errorList[i];
+                text += "Your " + getStringFromJointType(err.joint) + " was " + getStringFromErrorType(err.error);
+                if (err.frame < nFrames / 3)
+                {
+                    text += " at the beginning.  ";
+                }
+                else if (err.frame < 2 * nFrames / 3)
+                {
+                    text += " in the middle.  ";
+                }
+                else
+                {
+                    text += " near the end.  ";
+                }
+
+                if (errorDict.ContainsKey(text))
+                {
+                    errorDict[text] += 1;
+                }
+                else
+                {
+                    errorDict[text] = 1;
+                }
+            }
+
+            List<string> comments = errorDict.Keys.ToList();
+            comments.Sort((k1, k2) => errorDict[k1].CompareTo(errorDict[k2]));
+            comments.Reverse();
+
+            string speech = "";
+            for (int i = 0; i < Math.Min(numberErrorsMentioned, comments.Count); i++)
+            {
+                if (errorDict[comments[i]] < frameErrorMinimum)
+                {
+                    break;
+                }
+                speech += comments[i];
+            }
+
+            if (speech.Equals(""))
+            {
+                speech = "No significant errors found.";
+            }
+
+            Speak(speech);
         }
 
         private string getStringFromErrorType(Pose.ErrorType et)

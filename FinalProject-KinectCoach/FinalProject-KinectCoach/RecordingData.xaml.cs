@@ -272,7 +272,7 @@ namespace FinalProject_KinectCoach
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void openFileDialog(object sender, RoutedEventArgs e)
+        private void OpenFileDialog(object sender, RoutedEventArgs e)
         {
             // Create OpenFileDialog
             OpenFileDialog dlg = new OpenFileDialog();
@@ -289,7 +289,7 @@ namespace FinalProject_KinectCoach
                 string filename = dlg.FileName;
                 string[] pieces = filename.Split('\\');
                 FileNameTextBox.Text = pieces[pieces.Length-1];
-                processFile(filename);
+                ProcessFile(filename);
             }
         }
 
@@ -297,7 +297,7 @@ namespace FinalProject_KinectCoach
         /// Load in the recording
         /// </summary>
         /// <param name="filename"></param>
-        private void processFile(string filename)
+        private void ProcessFile(string filename)
         {
             frames = KinectFileUtils.ReadSkeletonFromRecordingFile(filename);
             if (frames.Count == 0)
@@ -312,7 +312,7 @@ namespace FinalProject_KinectCoach
 
             FrameCount.Text = "1/" + frames.Count + " frames";
             currentFrame = 0;
-            drawFileFrame();
+            DrawFileFrame();
         }
 
         private void PlayNextFrame(object sender, SkeletonFrameReadyEventArgs e)
@@ -328,7 +328,7 @@ namespace FinalProject_KinectCoach
                 {
                     currentFrame += 1;
                     FrameCount.Text = (currentFrame + 1) + "/" + frames.Count + " frames";
-                    drawFileFrame();
+                    DrawFileFrame();
                 }
             }
             else
@@ -337,12 +337,12 @@ namespace FinalProject_KinectCoach
                 {
                     currentFrame -= 1;
                     FrameCount.Text = (currentFrame + 1) + "/" + frames.Count + " frames";
-                    drawFileFrame();
+                    DrawFileFrame();
                 }
             }
         }
 
-        private void drawFileFrame()
+        private void DrawFileFrame()
         {
             using (DrawingContext dc = this.drawingGroup.Open())
             {
@@ -360,7 +360,7 @@ namespace FinalProject_KinectCoach
                 paused = true;
                 currentFrame -= 1;
                 FrameCount.Text = (currentFrame+1) + "/" + frames.Count + " frames";
-                drawFileFrame();
+                DrawFileFrame();
             }
         }
 
@@ -371,7 +371,7 @@ namespace FinalProject_KinectCoach
                 paused = true;
                 currentFrame += 1;
                 FrameCount.Text = (currentFrame + 1) + "/" + frames.Count + " frames";
-                drawFileFrame();
+                DrawFileFrame();
             }
         }
     }

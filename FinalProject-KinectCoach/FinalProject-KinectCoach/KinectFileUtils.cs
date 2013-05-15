@@ -46,10 +46,10 @@ namespace FinalProject_KinectCoach
                     continue;
                 }
                 string[] jointParts = line.Split(',');
-                JointType jt = stringToJointType(jointParts[0].Trim());
+                JointType jt = StringToJointType(jointParts[0].Trim());
 
                 Joint j = skel.Joints[jt];
-                j.TrackingState = stringToTrackingState(jointParts[1].Trim());
+                j.TrackingState = StringToTrackingState(jointParts[1].Trim());
 
                 SkeletonPoint p = new SkeletonPoint();
                 p.X = float.Parse(jointParts[2].Trim());
@@ -94,7 +94,7 @@ namespace FinalProject_KinectCoach
             return errors;
         }
 
-        public static Dictionary<string, string> getRecordingFileHeaders(string filepath)
+        public static Dictionary<string, string> GetRecordingFileHeaders(string filepath)
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
             StreamReader reader = new StreamReader(filepath);
@@ -128,7 +128,7 @@ namespace FinalProject_KinectCoach
         /// </summary>
         /// <param name="n"></param>
         /// <returns></returns>
-        private static JointTrackingState stringToTrackingState(string n)
+        private static JointTrackingState StringToTrackingState(string n)
         {
             if (n.Equals("Tracked"))
             {
@@ -149,7 +149,7 @@ namespace FinalProject_KinectCoach
         /// </summary>
         /// <param name="n"></param>
         /// <returns></returns>
-        private static JointType stringToJointType(string n)
+        private static JointType StringToJointType(string n)
         {
             if (n.Equals("HipCenter"))
             {

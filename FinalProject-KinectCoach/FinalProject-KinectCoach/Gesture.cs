@@ -19,7 +19,7 @@ namespace FinalProject_KinectCoach
 {
     class Gesture
     {
-        public static string ACTION_DIRECTORY = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
+        public static string ACTION_DIRECTORY = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings\\Actions";
 
         private string filepath;
         private List<List<Skeleton>> trainingDataFrames = new List<List<Skeleton>>();
@@ -42,17 +42,24 @@ namespace FinalProject_KinectCoach
         {
             this.name = name;
             filepath = Gesture.ACTION_DIRECTORY + "\\" + name + ".action";
-            Dictionary<string, string> headers = KinectFileUtils.getRecordingFileHeaders(filepath);
+            Dictionary<string, string> headers = KinectFileUtils.GetRecordingFileHeaders(filepath);
 
             startPose = new Pose(headers["STARTPOSE"]);
             endPose = new Pose(headers["ENDPOSE"]);
-            endPose.scaleErrors(float.Parse(headers["ENDSCALAR"]));
+            endPose.ScaleErrors(float.Parse(headers["ENDSCALAR"]));
 
             string[] td = headers["TRAININGDATA"].Split(',');
             foreach (string s in td)
             {
                 trainingDataFrames.Add(KinectFileUtils.ReadSkeletonFromRecordingFile(ACTION_DIRECTORY + "\\" + s));
             }
+
+            string[] errors = headers["ERRORS"].Split(',');
+            torsoError = double.Parse(errors[0]);
+            leftArmError = double.Parse(errors[1]);
+            rightArmError = double.Parse(errors[2]);
+            leftLegError = double.Parse(errors[3]);
+            rightLegError = double.Parse(errors[4]);
 
             foreach (List<Skeleton> train in trainingDataFrames)
             {
@@ -63,7 +70,7 @@ namespace FinalProject_KinectCoach
             }
 
             bestFrames = trainingDataFrames[0];
-            dist = KinectFrameUtils.totalDistTraveled(bestFrames);
+            dist = KinectFrameUtils.GetTotalDistTraveled(bestFrames);
         }
 
         /// <summary>
@@ -77,9 +84,9 @@ namespace FinalProject_KinectCoach
             double best = -1;
             foreach (List<Skeleton> train in trainingDataFrames)
             {
-                List<Skeleton> corrected = KinectFrameUtils.startCorrectedFrames(test, train);
-                double dist = KinectFrameUtils.getTotalDistBetween(corrected, train) / (train.Count);
-                Console.WriteLine(dist);
+                List<Skeleton> corrected = KinectFrameUtils.GetStartCorrectedFrames(test, train);
+                double dist = KinectFrameUtils.GetTotalDistBetween(corrected, train) / (train.Count);
+
                 if (dist < best | best < 0)
                 {
                     best = dist;
@@ -97,19 +104,14 @@ namespace FinalProject_KinectCoach
             this.rightLegError = rle;
         }
 
-        public List<Skeleton> GetShiftedFrames(SkeletonPoint position)
+        public void ShiftBestFrames(SkeletonPoint position)
         {
-            SkeletonPoint shift = new SkeletonPoint();
-            shift.X = bestFrames[0].Joints[JointType.HipCenter].Position.X - position.X;
-            shift.Y = bestFrames[0].Joints[JointType.HipCenter].Position.Y - position.Y;
-            shift.Z = bestFrames[0].Joints[JointType.HipCenter].Position.Z - position.Z;
+            SkeletonPoint shift = KinectFrameUtils.SubtractPosition(bestFrames[0].Joints[JointType.HipCenter].Position, position);
 
-            List<Skeleton> result = bestFrames;
-            for (int i = 0; i < result.Count; i++)
+            for (int i = 0; i < bestFrames.Count; i++)
             {
-                result[i] = KinectFrameUtils.shiftFrame(result[i], shift);
+                bestFrames[i] = KinectFrameUtils.ShiftFrame(bestFrames[i], shift);
             }
-            return result;
         }
 
         public void ApplyRotation(Matrix3x3 trans)
@@ -120,18 +122,39 @@ namespace FinalProject_KinectCoach
                 List<Skeleton> newFrames = new List<Skeleton>();
                 for (int i = 0; i < tFrames.Count; i++)
                 {
-                    newFrames.Add(KinectFrameUtils.transRotateTrans(tFrames[i], trans));
+                    newFrames.Add(KinectFrameUtils.TransRotateTrans(tFrames[i], trans));
                 }
                 trainingDataFrames[j] = newFrames;
             }
             bestFrames = trainingDataFrames[0];
-            startPose.applyTransform(trans);
-            endPose.applyTransform(trans);
+            startPose.ApplyTransform(trans);
+            endPose.ApplyTransform(trans);
+        }
+
+        public List<Pose.JointError> GetSignificantErrors(List<Skeleton> testFrames, Matrix3x3 trans)
+        {
+            List<Pose.JointError> res = new List<Pose.JointError>();
+
+            for (int i = 0; i < bestFrames.Count; i++)
+            {
+                List<Pose.JointError> iter = GetPoseOfFrame(i).GetSignificantErrors(testFrames[i], trans);
+                for (int j = 0; j < iter.Count; j++ )
+                {
+                    Pose.JointError je = iter[j];
+                    je.frame = i;
+                    iter[j] = je;
+                }
+                res.AddRange(iter);
+            }
+
+            return res;
         }
 
         public Pose GetPoseOfFrame(int index)
         {
-            return new Pose(bestFrames[index]);
+            Pose p = new Pose(bestFrames[index]);
+            p.SetErrors(torsoError, leftArmError, rightArmError, leftLegError, rightLegError);
+            return p;
         }
     }
 }

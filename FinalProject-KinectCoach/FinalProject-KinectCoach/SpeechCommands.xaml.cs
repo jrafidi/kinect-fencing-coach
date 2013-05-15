@@ -28,7 +28,11 @@ namespace FinalProject_KinectCoach
 
         private void WindowLoaded(object sender, RoutedEventArgs e)
         {
-            text += "Simple Commands:\n";
+            text += "Speech Control\n";
+            text += "  'Start listening to me': starts recognition of all other speech commands\n";
+            text += "  'Stop listening to me': stops recognition of all speech commands except command to start listening\n";
+
+            text += "\nSimple Commands:\n";
             text += "  'Start Recording': starts recording skeletons to dated file\n";
             text += "  'Stop Recording': stops recording skeletons to file\n";
             text += "  'Callibrate': saves rotational differences. Must be done prior to working with default training data.\n";
@@ -45,6 +49,7 @@ namespace FinalProject_KinectCoach
             text += "  'Watch my [Action Name]': starts watching for action [Action Name]\n";
             text += "  'Only show me': hides action sample and only shows recorded result\n";
             text += "  'Show on top of action': shows action sample with recorded result\n";
+            text += "  'What's wrong': coach will tell you which joints were wrong in which directions at what times\n";
 
             HelpText.Text = text;
         }
