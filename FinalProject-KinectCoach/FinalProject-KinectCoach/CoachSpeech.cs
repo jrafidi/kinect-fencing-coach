@@ -112,7 +112,7 @@ namespace FinalProject_KinectCoach
                 }
                 else if (err.frame < 2 * nFrames / 3)
                 {
-                    text += " in the middle.  ";
+                    text += " during the middle.  ";
                 }
                 else
                 {
