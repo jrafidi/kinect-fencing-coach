@@ -35,8 +35,8 @@ namespace FinalProject_KinectCoach
             text += "\nSimple Commands:\n";
             text += "  'Start Recording': starts recording skeletons to dated file\n";
             text += "  'Stop Recording': stops recording skeletons to file\n";
-            text += "  'Callibrate': saves rotational differences. Must be done prior to working with default training data.\n";
-            text += "  'Redo That/Once More': redo last command that was not a simple command.\n";
+            text += "  'Calibrate': saves rotational differences. Must be done prior to working with default training data.\n";
+            text += "  'Redo That/Once More': redo last command that was not a simple or speech control command.\n";
             text += "  'Clear All': ends existing practice (pose or action)\n";
 
             text += "\nPose Commands:\n";

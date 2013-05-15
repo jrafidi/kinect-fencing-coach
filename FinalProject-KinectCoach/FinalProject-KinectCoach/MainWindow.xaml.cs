@@ -268,7 +268,7 @@ namespace FinalProject_KinectCoach
             }
 
             // Speech utterance confidence below which we treat speech as if it hadn't been heard
-            const double ConfidenceThreshold = 0.6;
+            const double ConfidenceThreshold = 0.7;
 
             if (e.Result.Confidence >= ConfidenceThreshold)
             {
@@ -338,8 +338,8 @@ namespace FinalProject_KinectCoach
                                 case "clear":
                                     ClearAll();
                                     break;
-                                case "callibrate":
-                                    cpm = CompareMode.CALLIBRATE;
+                                case "calibrate":
+                                    cpm = CompareMode.CALIBRATE;
                                     break;
                                 case "showdemoaction":
                                     actionFrameCount = 0;
@@ -538,7 +538,7 @@ namespace FinalProject_KinectCoach
                             }
                         }
                         break;
-                    case CompareMode.CALLIBRATE:
+                    case CompareMode.CALIBRATE:
                         foreach (Skeleton skel in skeletons)
                         {
                             if (skel.TrackingState == SkeletonTrackingState.Tracked)
@@ -922,7 +922,7 @@ namespace FinalProject_KinectCoach
 
         private enum CompareMode
         {
-            NONE, POSE, ACTION, SIMUL_ACTION, CALLIBRATE
+            NONE, POSE, ACTION, SIMUL_ACTION, CALIBRATE
         }
 
         private enum DemoMode

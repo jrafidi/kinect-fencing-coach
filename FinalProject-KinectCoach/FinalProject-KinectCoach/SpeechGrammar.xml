@@ -94,9 +94,9 @@
         </one-of>
       </item>
       <item>
-        <tag>out.command="callibrate";</tag>
+        <tag>out.command="calibrate";</tag>
         <one-of>
-          <item> callibrate </item>
+          <item> calibrate </item>
         </one-of>
       </item>
     </one-of>
