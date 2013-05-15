@@ -10,6 +10,26 @@
       <item>
         <ruleref uri="#action"/>
       </item>
+      <item>
+        <ruleref uri="#listen"/>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="listen">
+    <one-of>
+      <item>
+        <tag>out.type="startlisten";</tag>
+        <one-of>
+          <item> start listening to me </item>
+        </one-of>
+      </item>
+      <item>
+        <tag>out.type="stoplisten";</tag>
+        <one-of>
+          <item> stop listening to me </item>
+        </one-of>
+      </item>
     </one-of>
   </rule>
 
@@ -80,7 +100,7 @@
       </item>
     </one-of>
   </rule>
-  
+
   <rule id="pose">
     <item> check my </item>
     <ruleref uri="#poses" />

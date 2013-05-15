@@ -33,7 +33,6 @@
             <Menu Width="Auto" Height="20" Background="#FFA9D1F4" DockPanel.Dock="Top"  VerticalAlignment="Top">
                 <MenuItem Header="_View Data" Margin="10 0 0 0">
                     <MenuItem Header="Recordings" Click="viewTrainingData"/>
-                    <MenuItem Header="Sessions"/>
 <!--                <Separator />
                     <MenuItem>
                         <MenuItem.Header>

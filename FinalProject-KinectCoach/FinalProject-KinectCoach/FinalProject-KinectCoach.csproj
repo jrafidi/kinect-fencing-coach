@@ -84,7 +84,6 @@
     <Compile Include="RecordingData.xaml.cs">
       <DependentUpon>RecordingData.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserSpeech.cs" />
     <Page Include="HotkeyHelp.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -159,7 +158,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Recordings\" />
-    <Folder Include="Sessions\" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="ScrapCode.txt" />

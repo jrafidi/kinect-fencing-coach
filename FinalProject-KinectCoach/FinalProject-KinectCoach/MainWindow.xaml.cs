@@ -128,6 +128,11 @@ namespace FinalProject_KinectCoach
             {
                 signal.Text = Properties.Resources.NoSpeechRecognizer;
             }
+
+            if (!listening)
+            {
+                signal.Text = "Deactivated";
+            }
         }
 
         /// <summary>
@@ -217,6 +222,11 @@ namespace FinalProject_KinectCoach
         private CoachSpeech coach = new CoachSpeech();
 
         /// <summary>
+        /// Determines if we are listening for speech commands
+        /// </summary>
+        private bool listening = true;
+
+        /// <summary>
         /// Previous speech event, for repeating
         /// </summary>
         private SpeechRecognizedEventArgs previousSpeech;
@@ -262,66 +272,90 @@ namespace FinalProject_KinectCoach
 
             if (e.Result.Confidence >= ConfidenceThreshold)
             {
-                switch (e.Result.Semantics["type"].Value.ToString())
+                if (!listening)
                 {
-                    case "simple":
-                        switch (e.Result.Semantics["command"].Value.ToString())
-                        {
-                            case "recording":
-                                startRecordingSkeleton("recording");
-                                break;
-                            case "stoprecording":
-                                stopRecordingSkeleton();
-                                break;
-                            case "show":
-                                if (currentPose != null)
-                                {
-                                    dm = DemoMode.POSE;
-                                }
-                                else if (currentAction != null)
-                                {
-                                    dm = DemoMode.ACTION;
-                                }
-                                break;
-                            case "hide":
-                                dm = DemoMode.NONE;
-                                break;
-                            case "incorrect":
-                                critiquePose = true;
-                                break;
-                            case "again":
-                                if (previousSpeech != null)
-                                {
-                                    SpeechRecognized(null, previousSpeech);
-                                }
-                                break;
-                            case "exit":
-                                this.Close();
-                                break;
-                            case "clear":
-                                clearAll();
-                                break;
-                            case "callibrate":
-                                cpm = CompareMode.CALLIBRATE;
-                                break;
-                            case "showdemoaction":
-                                actionFrameCount = 0;
-                                cpm = cpm == CompareMode.ACTION ? CompareMode.SIMUL_ACTION : cpm;
-                                break;
-                            case "hidedemoaction":
-                                actionFrameCount = 0;
-                                cpm = cpm == CompareMode.SIMUL_ACTION ? CompareMode.ACTION : cpm;
-                                break;
-                        }
-                        break;
-                    case "pose":
-                        checkPose(e.Result.Semantics["pose"].Value.ToString());
-                        previousSpeech = e;
-                        break;
-                    case "action":
-                        watchAction(e.Result.Semantics["action"].Value.ToString());
-                        previousSpeech = e;
-                        break;
+                    switch (e.Result.Semantics["type"].Value.ToString())
+                    {
+                        case "startlisten":
+                            coach.speak("Ready");
+                            signal.Text = "Ready";
+                            clearAll();
+                            listening = true;
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (e.Result.Semantics["type"].Value.ToString())
+                    {
+                        case "stoplisten":
+                            coach.speak("Understood.  Bye for now.");
+                            clearAll();
+                            signal.Text = "Deactivated";
+                            listening = false;
+                            break;
+                        case "simple":
+                            switch (e.Result.Semantics["command"].Value.ToString())
+                            {
+                                case "recording":
+                                    startRecordingSkeleton("recording");
+                                    break;
+                                case "stoprecording":
+                                    stopRecordingSkeleton();
+                                    break;
+                                case "show":
+                                    if (currentPose != null)
+                                    {
+                                        dm = DemoMode.POSE;
+                                    }
+                                    else if (currentAction != null)
+                                    {
+                                        dm = DemoMode.ACTION;
+                                    }
+                                    break;
+                                case "hide":
+                                    dm = DemoMode.NONE;
+                                    break;
+                                case "incorrect":
+                                    if (cpm == CompareMode.POSE)
+                                    {
+                                        critiquePose = true;
+                                    }
+                                    break;
+                                case "again":
+                                    if (previousSpeech != null)
+                                    {
+                                        SpeechRecognized(null, previousSpeech);
+                                    }
+                                    break;
+                                case "exit":
+                                    this.Close();
+                                    break;
+                                case "clear":
+                                    clearAll();
+                                    break;
+                                case "callibrate":
+                                    cpm = CompareMode.CALLIBRATE;
+                                    break;
+                                case "showdemoaction":
+                                    actionFrameCount = 0;
+                                    cpm = cpm == CompareMode.ACTION ? CompareMode.SIMUL_ACTION : cpm;
+                                    break;
+                                case "hidedemoaction":
+                                    actionFrameCount = 0;
+                                    cpm = cpm == CompareMode.SIMUL_ACTION ? CompareMode.ACTION : cpm;
+                                    break;
+                            }
+                            break;
+                        case "pose":
+                            checkPose(e.Result.Semantics["pose"].Value.ToString());
+                            previousSpeech = e;
+                            break;
+                        case "action":
+                            watchAction(e.Result.Semantics["action"].Value.ToString());
+                            previousSpeech = e;
+                            break;
+                    }
                 }
             }
         }
@@ -496,7 +530,7 @@ namespace FinalProject_KinectCoach
 
                                 if (critiquePose)
                                 {
-                                    coach.sayErrors(currentPose.getSignificantErrors(skel));
+                                    coach.sayErrors(currentPose.getSignificantErrors(skel, frontTransform));
                                     critiquePose = false;
                                 }
                             }
@@ -509,6 +543,9 @@ namespace FinalProject_KinectCoach
                             {
                                 currentPose = new Pose("ready");
                                 rotTransform = KinectFrameUtils.getRotationMatrix(skel, currentPose.frame);
+                                currentPose = new Pose("frontready");
+                                frontTransform = KinectFrameUtils.getRotationMatrix(skel, currentPose.frame);
+                                currentPose = null;
                                 coach.speak("Rotational differences recorded");
                                 cpm = CompareMode.NONE;
                             }
@@ -696,9 +733,14 @@ namespace FinalProject_KinectCoach
             Joint rWrist = skel.Joints[JointType.WristRight];
 
             SkeletonPoint diff = new SkeletonPoint();
-            diff.X = 1.2f * rHand.Position.X - rWrist.Position.X;
-            diff.Y = 1.2f * rHand.Position.Y - rWrist.Position.Y;
-            diff.Z = 1.2f * rHand.Position.Z - rWrist.Position.Z;
+            diff.X = rHand.Position.X - rWrist.Position.X;
+            diff.Y = rHand.Position.Y - rWrist.Position.Y;
+            diff.Z = rHand.Position.Z - rWrist.Position.Z;
+
+            float mag = (float)Math.Sqrt(diff.X * diff.X + diff.Y * diff.Y + diff.Z * diff.Z);
+            diff.X = diff.X * 1.0f / mag + 2.0f * rHand.Position.X;
+            diff.Y = diff.Y * 1.0f / mag + 2.0f * rHand.Position.Y;
+            diff.Z = diff.Z * 1.0f / mag + 2.0f * rHand.Position.Z;
 
             dc.DrawLine(new Pen(Brushes.DarkGray, 5), this.SkeletonPointToScreen(rHand.Position), this.SkeletonPointToScreen(diff));
         }
@@ -896,6 +938,7 @@ namespace FinalProject_KinectCoach
         private Pose currentPose = null;
 
         private Matrix3x3 rotTransform = Matrix3x3.Identity;
+        private Matrix3x3 frontTransform = Matrix3x3.Identity;
 
         private void checkPose(string pose)
         {

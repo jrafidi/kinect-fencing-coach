@@ -36,11 +36,13 @@ namespace FinalProject_KinectCoach
         {
             public JointType joint;
             public ErrorType error;
+            public double mag;
 
-            public JointError(JointType t, ErrorType e)
+            public JointError(JointType t, ErrorType e, double m)
             {
                 joint = t;
                 error = e;
+                mag = m;
             }
         }
 
@@ -68,15 +70,13 @@ namespace FinalProject_KinectCoach
             this.frame = frame;
         }
 
-        public Pose setErrors(double te, double lae, double rae, double lle, double rle)
+        public void setErrors(double te, double lae, double rae, double lle, double rle)
         {
             this.torsoError = te;
             this.leftArmError = lae;
             this.rightArmError = rae;
             this.leftLegError = lle;
             this.rightLegError = rle;
-
-            return this;
         }
 
         public void scaleErrors(float scalar)
@@ -138,13 +138,13 @@ namespace FinalProject_KinectCoach
             incorrect += errorMap[JointType.HipLeft] > leftLegError ? 1 : 0;
             incorrect += errorMap[JointType.KneeLeft] > leftLegError ? 1 : 0;
             incorrect += errorMap[JointType.AnkleLeft] > leftLegError * 1.5 ? 1 : 0;
-            incorrect += errorMap[JointType.FootLeft] > leftLegError * 1.5 && skeleton.Joints[JointType.FootLeft].TrackingState == JointTrackingState.Tracked ? 1 : 0;
+            incorrect += errorMap[JointType.FootLeft] > leftLegError * 3 && skeleton.Joints[JointType.FootLeft].TrackingState == JointTrackingState.Tracked ? 1 : 0;
 
             // Right Leg
             incorrect += errorMap[JointType.HipRight] > rightLegError ? 1 : 0;
             incorrect += errorMap[JointType.KneeRight] > rightLegError ? 1 : 0;
             incorrect += errorMap[JointType.AnkleRight] > rightLegError * 1.5 ? 1 : 0;
-            incorrect += errorMap[JointType.FootRight] > rightLegError * 1.5 && skeleton.Joints[JointType.FootRight].TrackingState == JointTrackingState.Tracked ? 1 : 0;
+            incorrect += errorMap[JointType.FootRight] > rightLegError * 3 && skeleton.Joints[JointType.FootRight].TrackingState == JointTrackingState.Tracked ? 1 : 0;
 
             return incorrect <= allowedIncorrect;
         }
@@ -154,22 +154,26 @@ namespace FinalProject_KinectCoach
             frame = KinectFrameUtils.transRotateTrans(frame, transform);
         }
 
-        public List<JointError> getSignificantErrors(Skeleton test)
+        public List<JointError> getSignificantErrors(Skeleton testFrame, Matrix3x3 trans)
         {
             List<JointError> res = new List<JointError>();
 
             Dictionary<JointType, List<double>> errorMap = new Dictionary<JointType, List<double>>();
+            //Skeleton test = KinectFrameUtils.transRotateTrans(testFrame, trans);
+            //Skeleton model = KinectFrameUtils.transRotateTrans(this.frame, trans);
+            Skeleton test = testFrame;
+            Skeleton model = this.frame;
 
             SkeletonPoint shift = new SkeletonPoint();
-            shift.X = this.frame.Joints[JointType.HipCenter].Position.X - test.Joints[JointType.HipCenter].Position.X;
-            shift.Y = this.frame.Joints[JointType.HipCenter].Position.Y - test.Joints[JointType.HipCenter].Position.Y;
-            shift.Z = this.frame.Joints[JointType.HipCenter].Position.Z - test.Joints[JointType.HipCenter].Position.Z;
+            shift.X = model.Joints[JointType.HipCenter].Position.X - test.Joints[JointType.HipCenter].Position.X;
+            shift.Y = model.Joints[JointType.HipCenter].Position.Y - test.Joints[JointType.HipCenter].Position.Y;
+            shift.Z = model.Joints[JointType.HipCenter].Position.Z - test.Joints[JointType.HipCenter].Position.Z;
 
             Skeleton shifted = KinectFrameUtils.shiftFrame(test, KinectFrameUtils.negPos(shift));
 
             foreach (Joint j in shifted.Joints)
             {
-                Joint jc = this.frame.Joints[j.JointType];
+                Joint jc = model.Joints[j.JointType];
                 SkeletonPoint p = j.Position;
                 SkeletonPoint pc = jc.Position;
 
@@ -187,37 +191,38 @@ namespace FinalProject_KinectCoach
                 int worst = errorMap[j].Select((value, index) => new { Value = value, Index = index })
                                         .Aggregate((a, b) => (Math.Abs(a.Value) > Math.Abs(b.Value)) ? a : b)
                                         .Index;
+                double err = errorMap[j][worst];
                 if (worst == 0)
                 {
-                    if (errorMap[j][worst] < 0)
+                    if (err < 0)
                     {
-                        res.Add(new JointError(j, ErrorType.BACKWARD));
+                        res.Add(new JointError(j, ErrorType.BACKWARD, Math.Abs(err)));
                     }
                     else
                     {
-                        res.Add(new JointError(j, ErrorType.FORWARD));
+                        res.Add(new JointError(j, ErrorType.FORWARD, Math.Abs(err)));
                     }
                 }
                 else if (worst == 1)
                 {
-                    if (errorMap[j][worst] < 0)
+                    if (err < 0)
                     {
-                        res.Add(new JointError(j, ErrorType.LOW));
+                        res.Add(new JointError(j, ErrorType.LOW, Math.Abs(err)));
                     }
                     else
                     {
-                        res.Add(new JointError(j, ErrorType.HIGH));
+                        res.Add(new JointError(j, ErrorType.HIGH, Math.Abs(err)));
                     }
                 }
                 else
                 {
-                    if (errorMap[j][worst] < 0)
+                    if (err < 0)
                     {
-                        res.Add(new JointError(j, ErrorType.INSIDE));
+                        res.Add(new JointError(j, ErrorType.INSIDE, Math.Abs(err)));
                     }
                     else
                     {
-                        res.Add(new JointError(j, ErrorType.OUTSIDE));
+                        res.Add(new JointError(j, ErrorType.OUTSIDE, Math.Abs(err)));
                     }
                 }
             }

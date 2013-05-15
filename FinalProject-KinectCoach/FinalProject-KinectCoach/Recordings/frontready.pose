@@ -1,0 +1,22 @@
+ERRORS:0.08, 100, 0.08, 0.09, 0.08
+FRAME
+HipCenter, Tracked, -0.3471644, -0.04304586, 3.310595
+Spine, Tracked, -0.3495326, 0.03158064, 3.304562
+ShoulderCenter, Tracked, -0.3598031, 0.4062512, 3.291282
+Head, Tracked, -0.2937666, 0.580672, 3.260753
+ShoulderLeft, Tracked, -0.4774535, 0.2867847, 3.194767
+ElbowLeft, Tracked, -0.6100612, 0.07903483, 3.168706
+WristLeft, Tracked, -0.4667692, -0.09157046, 3.102838
+HandLeft, Tracked, -0.381238, -0.145503, 3.076171
+ShoulderRight, Tracked, -0.2205071, 0.2777058, 3.445723
+ElbowRight, Tracked, -0.1532151, 0.03010532, 3.473151
+WristRight, Tracked, 0.1366643, 0.01646278, 3.565269
+HandRight, Tracked, 0.2292603, 0.03200234, 3.611312
+HipLeft, Tracked, -0.4114144, -0.1096764, 3.2617
+KneeLeft, Tracked, -0.4485824, -0.5706468, 3.125669
+AnkleLeft, Tracked, -0.5325705, -0.9938862, 3.216088
+FootLeft, Tracked, -0.4612266, -1.043056, 3.146392
+HipRight, Tracked, -0.2784835, -0.1216473, 3.361678
+KneeRight, Tracked, -0.08157529, -0.5498224, 3.414289
+AnkleRight, Tracked, -0.07671724, -0.9658704, 3.386878
+FootRight, Tracked, -0.005373269, -1.01504, 3.317183

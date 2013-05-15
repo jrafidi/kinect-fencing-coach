@@ -78,8 +78,12 @@ namespace FinalProject_KinectCoach
         {
             string text = "";
 
-            foreach (Pose.JointError err in errorList)
+            errorList.Sort((s1, s2) => s1.mag.CompareTo(s2.mag));
+            errorList.Reverse();
+
+            for (int i = 0; i < Math.Min(3, errorList.Count); i++ )
             {
+                Pose.JointError err = errorList[i];
                 text += "Your " + getStringFromJointType(err.joint) + " is " + getStringFromErrorType(err.error) + ".  ";
             }
 
