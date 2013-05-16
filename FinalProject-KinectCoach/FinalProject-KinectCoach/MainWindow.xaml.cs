@@ -146,7 +146,8 @@ namespace FinalProject_KinectCoach
             {
                 this.sensor.AudioSource.Stop();
                 this.sensor.SkeletonFrameReady -= this.SensorSkeletonFrameReady;
-
+                this.sensor.SkeletonStream.Disable();
+                
                 this.sensor.Stop();
                 this.sensor = null;
             }
@@ -154,9 +155,11 @@ namespace FinalProject_KinectCoach
             if (null != this.speechEngine)
             {
                 this.speechEngine.SpeechRecognized -= SpeechRecognized;
+                this.speechEngine.RecognizeAsyncCancel();
                 this.speechEngine.RecognizeAsyncStop();
-                this.speechEngine.Dispose();
+                this.speechEngine = null;
             }
+            Environment.Exit(1);
         }
 
         /// <summary>
@@ -842,7 +845,7 @@ namespace FinalProject_KinectCoach
         // SKELETON RECORDING CODE
         ////////////////////
 
-        private string recordDirectory = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings";
+        private string recordDirectory = "..\\..\\Recordings";
         private string recordFileName;
         private bool recording = false;
 

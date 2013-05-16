@@ -134,6 +134,7 @@ namespace FinalProject_KinectCoach
             {
                 for (int i = 0; i < diff; i++)
                 {
+                    test = AlignFrames(test, test.Count - 1);
                     test.Insert(0, test[0]);
                 }
             }

@@ -19,7 +19,7 @@ namespace FinalProject_KinectCoach
 {
     class Pose
     {
-        public static string POSE_DIRECTORY = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings\\Poses";
+        public static string POSE_DIRECTORY = "..\\..\\Recordings\\Poses";
         static readonly double defaultError = 0.1;
 
         string filepath;

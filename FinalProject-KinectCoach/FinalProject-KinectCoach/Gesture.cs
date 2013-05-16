@@ -19,7 +19,7 @@ namespace FinalProject_KinectCoach
 {
     class Gesture
     {
-        public static string ACTION_DIRECTORY = "C:\\Users\\Joey Rafidi\\Documents\\GitHub\\kinect-fencing-coach\\FinalProject-KinectCoach\\FinalProject-KinectCoach\\Recordings\\Actions";
+        public static string ACTION_DIRECTORY = "..\\..\\Recordings\\Actions";
 
         private string filepath;
         private List<List<Skeleton>> trainingDataFrames = new List<List<Skeleton>>();
